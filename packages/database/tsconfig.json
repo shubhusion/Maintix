@@ -1,0 +1,8 @@
+{
+  "extends": "@maintix/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src"]
+}

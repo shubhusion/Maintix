@@ -1,0 +1,221 @@
+// ================================
+// Maintix Database Schema
+// ================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ================================
+// Enums
+// ================================
+
+enum Role {
+  TENANT
+  MANAGER
+  TECHNICIAN
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityAction {
+  TICKET_CREATED
+  TECHNICIAN_ASSIGNED
+  TECHNICIAN_REASSIGNED
+  WORK_STARTED
+  COMPLETION_SUBMITTED
+  TICKET_APPROVED
+  TICKET_CANCELLED
+  PRIORITY_CHANGED
+  ATTACHMENT_ADDED
+  ATTACHMENT_REMOVED
+}
+
+enum NotificationType {
+  TICKET_CREATED
+  TICKET_ASSIGNED
+  WORK_STARTED
+  COMPLETION_SUBMITTED
+  TICKET_APPROVED
+  TICKET_CANCELLED
+  PRIORITY_CHANGED
+  TECHNICIAN_REASSIGNED
+}
+
+// ================================
+// Models
+// ================================
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  role         Role
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  propertyMemberships PropertyMember[]
+  createdTickets      Ticket[]           @relation("TicketCreatedBy")
+  assignedTickets     Ticket[]           @relation("TicketAssignedTo")
+  activities          TicketActivity[]
+  notifications       Notification[]
+  uploadedAttachments TicketAttachment[]
+
+  @@map("users")
+}
+
+model Property {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  address     String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Relations
+  members    PropertyMember[]
+  categories Category[]
+  tickets    Ticket[]
+
+  @@map("properties")
+}
+
+model PropertyMember {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, userId])
+  @@index([userId])
+  @@map("property_members")
+}
+
+model Category {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  propertyId String   @map("property_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  // Relations
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tickets  Ticket[]
+
+  @@unique([propertyId, name])
+  @@map("categories")
+}
+
+model Ticket {
+  id                 String       @id @default(uuid()) @db.Uuid
+  title              String
+  description        String
+  status             TicketStatus @default(OPEN)
+  priority           Priority     @default(LOW)
+  version            Int          @default(1)
+  propertyId         String       @map("property_id") @db.Uuid
+  categoryId         String       @map("category_id") @db.Uuid
+  createdById        String       @map("created_by_id") @db.Uuid
+  assignedToId       String?      @map("assigned_to_id") @db.Uuid
+  cancellationReason String?      @map("cancellation_reason")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  deletedAt          DateTime?    @map("deleted_at")
+
+  // Relations
+  property    Property           @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  category    Category           @relation(fields: [categoryId], references: [id])
+  createdBy   User               @relation("TicketCreatedBy", fields: [createdById], references: [id])
+  assignedTo  User?              @relation("TicketAssignedTo", fields: [assignedToId], references: [id])
+  attachments TicketAttachment[]
+  activities  TicketActivity[]
+  notifications Notification[]
+
+  @@index([propertyId, status])
+  @@index([assignedToId, status])
+  @@index([createdById])
+  @@map("tickets")
+}
+
+model TicketAttachment {
+  id           String   @id @default(uuid()) @db.Uuid
+  ticketId     String   @map("ticket_id") @db.Uuid
+  url          String
+  fileName     String   @map("file_name")
+  fileSize     Int      @map("file_size")
+  mimeType     String   @map("mime_type")
+  uploadedById String   @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket     Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  uploadedBy User   @relation(fields: [uploadedById], references: [id])
+
+  @@map("ticket_attachments")
+}
+
+/// Immutable audit trail — no update or delete operations allowed
+model TicketActivity {
+  id            String         @id @default(uuid()) @db.Uuid
+  ticketId      String         @map("ticket_id") @db.Uuid
+  actorId       String         @map("actor_id") @db.Uuid
+  action        ActivityAction
+  previousValue Json?          @map("previous_value")
+  newValue      Json?          @map("new_value")
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  // Relations
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actor  User   @relation(fields: [actorId], references: [id])
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_activities")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  ticketId  String?          @map("ticket_id") @db.Uuid
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isRead, createdAt])
+  @@map("notifications")
+}

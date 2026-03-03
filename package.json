@@ -1,0 +1,26 @@
+{
+  "name": "Maintix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-Property Maintenance Workflow Platform",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "pnpm --filter @maintix/database generate",
+    "db:migrate": "pnpm --filter @maintix/database migrate:dev",
+    "db:push": "pnpm --filter @maintix/database db:push",
+    "db:seed": "pnpm --filter @maintix/database seed",
+    "db:studio": "pnpm --filter @maintix/database studio"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "turbo": "^2.8.12.0"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

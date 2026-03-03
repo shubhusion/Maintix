@@ -1,0 +1,12 @@
+{
+  "extends": "@maintix/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": ["src"]
+}
