@@ -27,6 +27,7 @@ import {
 } from '@/hooks/use-tickets';
 import { usePropertyMembers } from '@/hooks/use-properties';
 import { useAuth } from '@/contexts/auth-context';
+import { ActivityTimeline } from '@/components/activity-timeline';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -161,7 +162,7 @@ export default function TicketDetailPage({
               <CardTitle className="text-base">Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap text-sm">{ticket.description}</p>
+              <p className="whitespace-pre-wrap text-sm max-w-prose">{ticket.description}</p>
             </CardContent>
           </Card>
 
@@ -174,7 +175,7 @@ export default function TicketDetailPage({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{ticket.cancellationReason}</p>
+                <p className="text-sm max-w-prose">{ticket.cancellationReason}</p>
               </CardContent>
             </Card>
           )}
@@ -187,7 +188,7 @@ export default function TicketDetailPage({
             <CardContent className="flex flex-wrap gap-2">
               {/* Manager: Assign */}
               {isManager && ticket.status === TicketStatus.OPEN && (
-                <Button onClick={() => setAssignDialogOpen(true)}>
+                <Button onClick={() => setAssignDialogOpen(true)} disabled={assignTicket.isPending}>
                   <UserCheck className="mr-2 h-4 w-4" />
                   Assign Technician
                 </Button>
@@ -198,6 +199,7 @@ export default function TicketDetailPage({
                 isAssignee &&
                 ticket.status === TicketStatus.ASSIGNED && (
                   <Button
+                    disabled={startWork.isPending}
                     onClick={() =>
                       handleAction(
                         () =>
@@ -210,7 +212,7 @@ export default function TicketDetailPage({
                     }
                   >
                     <Play className="mr-2 h-4 w-4" />
-                    Start Work
+                    {startWork.isPending ? 'Starting…' : 'Start Work'}
                   </Button>
                 )}
 
@@ -219,6 +221,7 @@ export default function TicketDetailPage({
                 isAssignee &&
                 ticket.status === TicketStatus.IN_PROGRESS && (
                   <Button
+                    disabled={submitCompletion.isPending}
                     onClick={() =>
                       handleAction(
                         () =>
@@ -231,7 +234,7 @@ export default function TicketDetailPage({
                     }
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Submit Completion
+                    {submitCompletion.isPending ? 'Submitting…' : 'Submit Completion'}
                   </Button>
                 )}
 
@@ -239,6 +242,7 @@ export default function TicketDetailPage({
               {isManager &&
                 ticket.status === TicketStatus.AWAITING_APPROVAL && (
                   <Button
+                    disabled={approveTicket.isPending}
                     onClick={() =>
                       handleAction(
                         () =>
@@ -252,7 +256,7 @@ export default function TicketDetailPage({
                     className="bg-success-600 hover:bg-success-600/90"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Approve
+                    {approveTicket.isPending ? 'Approving…' : 'Approve'}
                   </Button>
                 )}
 
@@ -263,6 +267,7 @@ export default function TicketDetailPage({
                   <Button
                     variant="outline"
                     onClick={() => setPriorityDialogOpen(true)}
+                    disabled={updatePriority.isPending}
                   >
                     Update Priority
                   </Button>
@@ -275,6 +280,7 @@ export default function TicketDetailPage({
                   <Button
                     variant="outline"
                     onClick={() => setReassignDialogOpen(true)}
+                    disabled={reassignTicket.isPending}
                   >
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Reassign
@@ -288,6 +294,7 @@ export default function TicketDetailPage({
                   <Button
                     variant="destructive"
                     onClick={() => setCancelDialogOpen(true)}
+                    disabled={cancelTicket.isPending}
                   >
                     <XCircle className="mr-2 h-4 w-4" />
                     Cancel Ticket
@@ -307,6 +314,9 @@ export default function TicketDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {/* Activity Timeline */}
+          <ActivityTimeline ticketId={ticketId} />
         </div>
 
         {/* Sidebar */}
@@ -413,7 +423,7 @@ export default function TicketDetailPage({
             <DialogDescription>Provide a reason for cancelling this ticket.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>Reason for cancellation</Label>
+            <Label>Reason for cancellation <span className="text-error-500">*</span></Label>
             <Textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

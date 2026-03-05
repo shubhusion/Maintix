@@ -54,6 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
+  // Listen for 401 session-expired events from api-client
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      localStorage.removeItem('accessToken');
+      setUser(null);
+    };
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+  }, []);
+
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.post<{ accessToken: string }>('/auth/login', {
       email,

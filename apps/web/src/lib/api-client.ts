@@ -49,6 +49,11 @@ async function request<T>(
       timestamp: new Date().toISOString(),
     }));
 
+    // Dispatch session-expired event on 401 so AuthProvider can logout
+    if (response.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:session-expired'));
+    }
+
     throw new ApiError(
       error.statusCode,
       error.errorCode,

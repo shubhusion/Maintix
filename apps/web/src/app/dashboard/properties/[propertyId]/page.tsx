@@ -362,7 +362,7 @@ export default function PropertyDetailPage({
           </DialogHeader>
           <form onSubmit={handleSubmit(onCreateCategory)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="catName">Name</Label>
+              <Label htmlFor="catName">Name <span className="text-error-500">*</span></Label>
               <Input
                 id="catName"
                 placeholder="e.g. Plumbing"

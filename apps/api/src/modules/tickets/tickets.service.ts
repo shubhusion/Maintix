@@ -84,6 +84,13 @@ export class TicketsService {
       deletedAt: null,
     };
 
+    if (query.search) {
+      where.OR = [
+        { title: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
     if (query.status) where.status = query.status;
     if (query.priority) where.priority = query.priority;
     if (query.categoryId) where.categoryId = query.categoryId;

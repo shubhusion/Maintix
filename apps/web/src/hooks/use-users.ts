@@ -11,10 +11,15 @@ interface User {
   createdAt: string;
 }
 
-export function useUsers() {
+export function useUsers(search?: string) {
   return useQuery({
-    queryKey: ['users'],
-    queryFn: () => api.get<User[]>('/users'),
+    queryKey: ['users', search],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      const qs = params.toString();
+      return api.get<User[]>(`/users${qs ? `?${qs}` : ''}`);
+    },
   });
 }
 

@@ -62,6 +62,10 @@ Open:
 | Email | Password | Role |
 |-------|----------|------|
 | `admin@Maintix.com` | `ChangeThisPassword123` | Manager |
+| `tenant@Maintix.com` | `TenantPass123` | Tenant |
+| `tech@Maintix.com` | `TechPass123` | Technician |
+
+The seed also creates a **Sunrise Apartments** property with all three users as members and four default categories (Plumbing, Electrical, HVAC, General Maintenance).
 
 ## Project Structure
 

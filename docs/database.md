@@ -269,7 +269,17 @@ User notifications triggered by ticket events.
 
 ### Seed Data
 
-The seed script (`packages/database/prisma/seed.ts`) creates one default manager:
+The seed script (`packages/database/prisma/seed.ts`) creates three users, a property, memberships, and default categories:
+
+**Users:**
+
+| Email | Password | Role |
+|-------|----------|------|
+| `admin@Maintix.com` | `ChangeThisPassword123` | Manager |
+| `tenant@Maintix.com` | `TenantPass123` | Tenant |
+| `tech@Maintix.com` | `TechPass123` | Technician |
+
+The manager email/password can be overridden via env vars:
 
 | Field | Default | Env Override |
 |-------|---------|-------------|
@@ -277,9 +287,12 @@ The seed script (`packages/database/prisma/seed.ts`) creates one default manager
 | Password | `ChangeThisPassword123` | `SEED_MANAGER_PASSWORD` |
 | First Name | `Admin` | `SEED_MANAGER_FIRST_NAME` |
 | Last Name | `Manager` | `SEED_MANAGER_LAST_NAME` |
-| Role | `MANAGER` | — |
 
-The seed is idempotent — running it again will skip if the email already exists.
+**Property:** "Sunrise Apartments" at 123 Main St — all three users are linked as members.
+
+**Categories:** Plumbing, Electrical, HVAC, General Maintenance (scoped to the property).
+
+The seed is idempotent — running it again will skip existing records.
 
 ### Connection
 

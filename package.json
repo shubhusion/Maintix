@@ -9,11 +9,12 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "db:generate": "pnpm --filter @maintix/database generate",
-    "db:migrate": "pnpm --filter @maintix/database migrate:dev",
+    "db:generate": "pnpm --filter @maintix/database db:generate",
+    "db:migrate": "pnpm --filter @maintix/database db:migrate",
     "db:push": "pnpm --filter @maintix/database db:push",
-    "db:seed": "pnpm --filter @maintix/database seed",
-    "db:studio": "pnpm --filter @maintix/database studio"
+    "db:reset": "pnpm --filter @maintix/database db:reset",
+    "db:seed": "pnpm --filter @maintix/database db:seed",
+    "db:studio": "pnpm --filter @maintix/database db:studio"
   },
   "devDependencies": {
     "prettier": "^3.8.1",

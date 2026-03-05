@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useDeferredValue } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Users as UsersIcon, Mail, Shield } from 'lucide-react';
+import { Plus, Users as UsersIcon, Mail, Shield, Search } from 'lucide-react';
 import { useUsers, useCreateUser, type User } from '@/hooks/use-users';
 import { useAuth } from '@/contexts/auth-context';
 import { createUserSchema } from '@/lib/validations';
@@ -42,7 +42,9 @@ const roleConfig: Record<string, { label: string; variant: 'default' | 'secondar
 
 export default function UsersPage() {
   const { user } = useAuth();
-  const { data: users, isLoading } = useUsers();
+  const [searchInput, setSearchInput] = useState('');
+  const deferredSearch = useDeferredValue(searchInput);
+  const { data: users, isLoading } = useUsers(deferredSearch || undefined);
   const createUser = useCreateUser();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -89,6 +91,17 @@ export default function UsersPage() {
           <Plus className="mr-2 h-4 w-4" />
           Add User
         </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative w-full sm:w-auto">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search users…"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="pl-9 w-full sm:w-[280px]"
+        />
       </div>
 
       {isLoading ? (
@@ -149,7 +162,7 @@ export default function UsersPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName">First Name <span className="text-error-500">*</span></Label>
                 <Input
                   id="firstName"
                   {...form.register('firstName')}
@@ -162,7 +175,7 @@ export default function UsersPage() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName">Last Name <span className="text-error-500">*</span></Label>
                 <Input
                   id="lastName"
                   {...form.register('lastName')}
@@ -176,7 +189,7 @@ export default function UsersPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email <span className="text-error-500">*</span></Label>
               <Input
                 id="email"
                 type="email"
@@ -190,7 +203,7 @@ export default function UsersPage() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password <span className="text-error-500">*</span></Label>
               <Input
                 id="password"
                 type="password"
@@ -204,7 +217,7 @@ export default function UsersPage() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Role</Label>
+              <Label>Role <span className="text-error-500">*</span></Label>
               <Select
                 value={form.watch('role')}
                 onValueChange={(v) => form.setValue('role', v as Role.TENANT | Role.TECHNICIAN)}

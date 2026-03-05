@@ -11,12 +11,14 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { useUnreadCount } from '@/hooks/use-notifications';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Role } from '@maintix/shared-types';
 
 const navigation = [
@@ -48,6 +50,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count ?? 0;
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Close sidebar on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [sidebarOpen]);
+
+  // Trap focus inside mobile sidebar when open
+  useEffect(() => {
+    if (!sidebarOpen || !sidebarRef.current) return;
+    const sidebar = sidebarRef.current;
+    const focusableEls = sidebar.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusableEls.length > 0) focusableEls[0].focus();
+  }, [sidebarOpen]);
 
   const handleLogout = () => {
     logout();
@@ -60,6 +84,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       (user && item.roles.includes(user.role as Role)),
   );
 
+  // Generate breadcrumbs from pathname
+  const breadcrumbs = generateBreadcrumbs(pathname);
+  const pageTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard';
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Mobile sidebar overlay */}
@@ -67,11 +95,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
+        role={sidebarOpen ? 'dialog' : undefined}
+        aria-modal={sidebarOpen ? true : undefined}
+        aria-label="Main navigation"
         className={cn(
           'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card transition-transform lg:static lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -86,13 +119,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <button
             className="ml-auto lg:hidden"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
+        <nav aria-label="Sidebar navigation" className="flex-1 space-y-1 p-4">
           {filteredNav.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -102,6 +136,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 key={item.name}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
+                aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
@@ -136,6 +171,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               size="icon"
               onClick={handleLogout}
               className="shrink-0"
+              aria-label="Log out"
             >
               <LogOut className="h-4 w-4" />
             </Button>
@@ -150,18 +186,50 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <button
             className="lg:hidden"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
           >
             <Menu className="h-6 w-6" />
           </button>
 
+          {/* Breadcrumbs */}
+          {breadcrumbs.length > 0 && (
+            <nav aria-label="Breadcrumb" className="hidden sm:block">
+              <ol className="flex items-center gap-1 text-sm text-muted-foreground">
+                {breadcrumbs.map((crumb, index) => (
+                  <li key={crumb.href} className="flex items-center gap-1">
+                    {index > 0 && <ChevronRight className="h-3.5 w-3.5" />}
+                    {index === breadcrumbs.length - 1 ? (
+                      <span className="font-medium text-foreground" aria-current="page">
+                        {crumb.label}
+                      </span>
+                    ) : (
+                      <Link
+                        href={crumb.href}
+                        className="hover:text-foreground transition-colors"
+                      >
+                        {crumb.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+
+          {/* Mobile page title */}
+          <h1 className="text-lg font-semibold sm:hidden truncate">{pageTitle}</h1>
+
           <div className="flex-1" />
+
+          {/* Theme toggle */}
+          <ThemeToggle />
 
           {/* Notifications */}
           <Link href="/dashboard/notifications" className="relative">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}>
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground" aria-hidden="true">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -174,4 +242,29 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+}
+
+// Breadcrumb generation utility
+const routeLabels: Record<string, string> = {
+  dashboard: 'Dashboard',
+  properties: 'Properties',
+  tickets: 'Tickets',
+  users: 'Users',
+  notifications: 'Notifications',
+};
+
+function generateBreadcrumbs(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length <= 1) return []; // Just /dashboard — no breadcrumbs needed
+
+  const crumbs: { label: string; href: string }[] = [];
+  let currentPath = '';
+
+  for (const segment of segments) {
+    currentPath += `/${segment}`;
+    const label = routeLabels[segment] || decodeURIComponent(segment);
+    crumbs.push({ label, href: currentPath });
+  }
+
+  return crumbs;
 }

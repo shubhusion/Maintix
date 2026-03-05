@@ -4,6 +4,10 @@ import { TicketStatus, Priority } from '@maintix/shared-types';
 
 export class TicketQueryDto {
   @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
   @IsEnum(TicketStatus)
   status?: TicketStatus;
 

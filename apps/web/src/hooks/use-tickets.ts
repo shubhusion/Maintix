@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, useQueries } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { ActivityAction } from '@maintix/shared-types';
 import type { TicketStatus, Priority } from '@maintix/shared-types';
 
 interface TicketUser {
@@ -32,6 +33,7 @@ interface TicketsResponse {
 }
 
 interface TicketQueryParams {
+  search?: string;
   status?: TicketStatus;
   priority?: Priority;
   categoryId?: string;
@@ -214,4 +216,79 @@ export function useReassignTicket() {
   });
 }
 
-export type { Ticket, TicketUser, TicketsResponse, TicketQueryParams };
+/**
+ * Fetch tickets across all properties by issuing parallel queries per property.
+ * Merges and sorts results client-side.
+ */
+export function useAllPropertyTickets(
+  propertyIds: string[],
+  params: TicketQueryParams = {},
+) {
+  const queries = useQueries({
+    queries: propertyIds.map((propertyId) => ({
+      queryKey: ['tickets', propertyId, params],
+      queryFn: () =>
+        api.get<TicketsResponse>(
+          `/properties/${propertyId}/tickets${buildQueryString(params)}`,
+        ),
+      enabled: propertyIds.length > 0,
+    })),
+  });
+
+  const isLoading = queries.some((q) => q.isLoading);
+  const isError = queries.some((q) => q.isError);
+
+  const tickets = queries
+    .flatMap((q) => q.data?.data ?? [])
+    .sort((a, b) => {
+      const dir = params.sortDir === 'asc' ? 1 : -1;
+      const field = params.sortBy || 'createdAt';
+      if (field === 'priority') {
+        const order: Record<string, number> = { LOW: 0, MEDIUM: 1, HIGH: 2, URGENT: 3 };
+        return dir * ((order[a.priority] ?? 0) - (order[b.priority] ?? 0));
+      }
+      return dir * (new Date(a[field as 'createdAt' | 'updatedAt'] ?? a.createdAt).getTime() -
+        new Date(b[field as 'createdAt' | 'updatedAt'] ?? b.createdAt).getTime());
+    });
+
+  return { tickets, isLoading, isError };
+}
+
+// === Activity types & hook ===
+
+interface ActivityActor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+}
+
+interface TicketActivity {
+  id: string;
+  ticketId: string;
+  action: ActivityAction;
+  previousValue: Record<string, unknown> | null;
+  newValue: Record<string, unknown> | null;
+  createdAt: string;
+  actor: ActivityActor;
+}
+
+interface ActivitiesResponse {
+  data: TicketActivity[];
+  meta: { hasMore: boolean; nextCursor: string | null };
+}
+
+export function useTicketActivities(ticketId: string) {
+  return useInfiniteQuery({
+    queryKey: ['tickets', ticketId, 'activity'],
+    queryFn: ({ pageParam }) => {
+      const params = pageParam ? `?cursor=${pageParam}` : '';
+      return api.get<ActivitiesResponse>(`/tickets/${ticketId}/activity${params}`);
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
+    enabled: !!ticketId,
+  });
+}
+
+export type { Ticket, TicketUser, TicketsResponse, TicketQueryParams, TicketActivity, ActivityActor };

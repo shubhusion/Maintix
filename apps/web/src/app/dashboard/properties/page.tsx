@@ -124,7 +124,7 @@ export default function PropertiesPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Name <span className="text-error-500">*</span></Label>
               <Input
                 id="name"
                 placeholder="Sunrise Apartments"
@@ -135,7 +135,7 @@ export default function PropertiesPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Address <span className="text-error-500">*</span></Label>
               <Input
                 id="address"
                 placeholder="123 Main St, City, State"

@@ -32,8 +32,8 @@ export class UsersController {
   @Get()
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'List all users (manager only)' })
-  findAll(@Query('role') role?: Role) {
-    return this.usersService.findAll(role);
+  findAll(@Query('role') role?: Role, @Query('search') search?: string) {
+    return this.usersService.findAll(role, search);
   }
 
   @Get('me')

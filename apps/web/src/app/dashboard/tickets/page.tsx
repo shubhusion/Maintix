@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useDeferredValue } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Ticket, Filter } from 'lucide-react';
+import { Plus, Ticket, ArrowUpDown, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useProperties } from '@/hooks/use-properties';
-import { useInfiniteTickets, useCreateTicket, type TicketQueryParams } from '@/hooks/use-tickets';
+import { useInfiniteTickets, useAllPropertyTickets, useCreateTicket, type TicketQueryParams } from '@/hooks/use-tickets';
 import { useCategories } from '@/hooks/use-categories';
 import { createTicketSchema, type CreateTicketFormData } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
@@ -42,24 +42,45 @@ export default function TicketsPage() {
   const { data: properties } = useProperties();
   const { toast } = useToast();
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId || 'all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortDir, setSortDir] = useState<string>('desc');
+  const [searchInput, setSearchInput] = useState('');
+  const deferredSearch = useDeferredValue(searchInput);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const isAllProperties = selectedPropertyId === 'all';
+  const allPropertyIds = properties?.map((p) => p.id) ?? [];
 
   const queryParams: TicketQueryParams = {};
   if (statusFilter !== 'all') queryParams.status = statusFilter as TicketStatus;
   if (priorityFilter !== 'all') queryParams.priority = priorityFilter as Priority;
+  if (deferredSearch.trim()) queryParams.search = deferredSearch.trim();
+  queryParams.sortBy = sortBy;
+  queryParams.sortDir = sortDir;
 
   const {
     data: ticketsData,
-    isLoading,
+    isLoading: isSingleLoading,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useInfiniteTickets(selectedPropertyId, queryParams);
-  const { data: categories } = useCategories(selectedPropertyId);
-  const createTicket = useCreateTicket(selectedPropertyId);
+  } = useInfiniteTickets(isAllProperties ? '' : selectedPropertyId, queryParams);
+
+  const {
+    tickets: allTickets,
+    isLoading: isAllLoading,
+  } = useAllPropertyTickets(isAllProperties ? allPropertyIds : [], queryParams);
+
+  const { data: categories } = useCategories(isAllProperties ? '' : selectedPropertyId);
+  const createTicket = useCreateTicket(isAllProperties ? '' : selectedPropertyId);
+
+  const isLoading = isAllProperties ? isAllLoading : isSingleLoading;
+  const tickets = isAllProperties
+    ? allTickets
+    : (ticketsData?.pages.flatMap((page) => page.data) ?? []);
 
   const {
     register,
@@ -83,8 +104,6 @@ export default function TicketsPage() {
     }
   };
 
-  const tickets = ticketsData?.pages.flatMap((page) => page.data) ?? [];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -94,7 +113,7 @@ export default function TicketsPage() {
             Maintenance requests across your properties.
           </p>
         </div>
-        {selectedPropertyId && (
+        {selectedPropertyId && !isAllProperties && (
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             New Ticket
@@ -104,11 +123,22 @@ export default function TicketsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search tickets…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pl-9 w-full sm:w-[220px]"
+          />
+        </div>
+
         <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Select property" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Properties</SelectItem>
             {properties?.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.name}
@@ -144,19 +174,30 @@ export default function TicketsPage() {
             ))}
           </SelectContent>
         </Select>
+
+        <Select
+          value={`${sortBy}:${sortDir}`}
+          onValueChange={(val) => {
+            const [field, dir] = val.split(':');
+            setSortBy(field);
+            setSortDir(dir);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="createdAt:desc">Newest First</SelectItem>
+            <SelectItem value="createdAt:asc">Oldest First</SelectItem>
+            <SelectItem value="updatedAt:desc">Recently Updated</SelectItem>
+            <SelectItem value="priority:desc">Highest Priority</SelectItem>
+            <SelectItem value="priority:asc">Lowest Priority</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {!selectedPropertyId ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Filter className="mb-4 h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mb-1 text-lg font-medium">Select a property</h3>
-            <p className="text-sm text-muted-foreground">
-              Choose a property to view its tickets.
-            </p>
-          </CardContent>
-        </Card>
-      ) : isLoading ? (
+      {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-[72px] rounded-lg" />
@@ -169,10 +210,13 @@ export default function TicketsPage() {
               key={ticket.id}
               href={`/dashboard/tickets/${ticket.id}`}
             >
-              <div className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:border-primary/50">
+              <div className="flex items-center justify-between rounded-lg border p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{ticket.title}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {isAllProperties && ticket.property?.name && (
+                      <span className="font-medium text-foreground/70">{ticket.property.name} · </span>
+                    )}
                     {ticket.category?.name} · {ticket.createdBy?.firstName}{' '}
                     {ticket.createdBy?.lastName} ·{' '}
                     {new Date(ticket.createdAt).toLocaleDateString()}
@@ -197,7 +241,7 @@ export default function TicketsPage() {
               </div>
             </Link>
           ))}
-          {hasNextPage && (
+          {!isAllProperties && hasNextPage && (
             <div className="text-center">
               <Button
                 variant="outline"
@@ -231,7 +275,7 @@ export default function TicketsPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Title <span className="text-error-500">*</span></Label>
               <Input
                 id="title"
                 placeholder="e.g. Leaking faucet in unit 3B"
@@ -242,7 +286,7 @@ export default function TicketsPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description <span className="text-error-500">*</span></Label>
               <Textarea
                 id="description"
                 placeholder="Describe the issue in detail..."
@@ -256,7 +300,7 @@ export default function TicketsPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>Category <span className="text-error-500">*</span></Label>
               <Select onValueChange={(val) => setValue('categoryId', val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />

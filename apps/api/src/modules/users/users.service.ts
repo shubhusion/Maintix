@@ -57,10 +57,17 @@ export class UsersService {
     return user;
   }
 
-  async findAll(role?: Role) {
+  async findAll(role?: Role, search?: string) {
     const where: Record<string, unknown> = { deletedAt: null };
     if (role) {
       where.role = role;
+    }
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
     }
 
     return this.prisma.user.findMany({
