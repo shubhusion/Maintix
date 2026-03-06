@@ -1,4 +1,10 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery, useQueries } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+  useQueries,
+} from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { ActivityAction } from '@maintix/shared-types';
 import type { TicketStatus, Priority } from '@maintix/shared-types';
@@ -60,9 +66,7 @@ export function useTickets(propertyId: string, params: TicketQueryParams = {}) {
   return useQuery({
     queryKey: ['tickets', propertyId, params],
     queryFn: () =>
-      api.get<TicketsResponse>(
-        `/properties/${propertyId}/tickets${buildQueryString(params)}`,
-      ),
+      api.get<TicketsResponse>(`/properties/${propertyId}/tickets${buildQueryString(params)}`),
     enabled: !!propertyId,
   });
 }
@@ -78,7 +82,7 @@ export function useInfiniteTickets(propertyId: string, params: TicketQueryParams
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.meta?.hasMore ? lastPage.meta.nextCursor ?? undefined : undefined,
+      lastPage.meta?.hasMore ? (lastPage.meta.nextCursor ?? undefined) : undefined,
     enabled: !!propertyId,
   });
 }
@@ -187,8 +191,7 @@ export function useUpdatePriority() {
       ticketId: string;
       priority: Priority;
       version: number;
-    }) =>
-      api.patch<Ticket>(`/tickets/${ticketId}/priority`, { priority, version }),
+    }) => api.patch<Ticket>(`/tickets/${ticketId}/priority`, { priority, version }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       queryClient.invalidateQueries({ queryKey: ['tickets', 'detail', variables.ticketId] });
@@ -207,8 +210,7 @@ export function useReassignTicket() {
       ticketId: string;
       technicianId: string;
       version: number;
-    }) =>
-      api.patch<Ticket>(`/tickets/${ticketId}/reassign`, { technicianId, version }),
+    }) => api.patch<Ticket>(`/tickets/${ticketId}/reassign`, { technicianId, version }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       queryClient.invalidateQueries({ queryKey: ['tickets', 'detail', variables.ticketId] });
@@ -220,17 +222,12 @@ export function useReassignTicket() {
  * Fetch tickets across all properties by issuing parallel queries per property.
  * Merges and sorts results client-side.
  */
-export function useAllPropertyTickets(
-  propertyIds: string[],
-  params: TicketQueryParams = {},
-) {
+export function useAllPropertyTickets(propertyIds: string[], params: TicketQueryParams = {}) {
   const queries = useQueries({
     queries: propertyIds.map((propertyId) => ({
       queryKey: ['tickets', propertyId, params],
       queryFn: () =>
-        api.get<TicketsResponse>(
-          `/properties/${propertyId}/tickets${buildQueryString(params)}`,
-        ),
+        api.get<TicketsResponse>(`/properties/${propertyId}/tickets${buildQueryString(params)}`),
       enabled: propertyIds.length > 0,
     })),
   });
@@ -247,8 +244,11 @@ export function useAllPropertyTickets(
         const order: Record<string, number> = { LOW: 0, MEDIUM: 1, HIGH: 2, URGENT: 3 };
         return dir * ((order[a.priority] ?? 0) - (order[b.priority] ?? 0));
       }
-      return dir * (new Date(a[field as 'createdAt' | 'updatedAt'] ?? a.createdAt).getTime() -
-        new Date(b[field as 'createdAt' | 'updatedAt'] ?? b.createdAt).getTime());
+      return (
+        dir *
+        (new Date(a[field as 'createdAt' | 'updatedAt'] ?? a.createdAt).getTime() -
+          new Date(b[field as 'createdAt' | 'updatedAt'] ?? b.createdAt).getTime())
+      );
     });
 
   return { tickets, isLoading, isError };
@@ -291,4 +291,11 @@ export function useTicketActivities(ticketId: string) {
   });
 }
 
-export type { Ticket, TicketUser, TicketsResponse, TicketQueryParams, TicketActivity, ActivityActor };
+export type {
+  Ticket,
+  TicketUser,
+  TicketsResponse,
+  TicketQueryParams,
+  TicketActivity,
+  ActivityActor,
+};

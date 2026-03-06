@@ -29,8 +29,8 @@ export function CtaSection() {
 
         <BlurFade delay={0.1}>
           <p className="mt-5 text-base text-neutral-400 max-w-lg mx-auto leading-relaxed">
-            Join property managers who have streamlined their workflows with Maintix.
-            Set up your first property in under 5 minutes.
+            Join property managers who have streamlined their workflows with Maintix. Set up your
+            first property in under 5 minutes.
           </p>
         </BlurFade>
 

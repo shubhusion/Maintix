@@ -12,6 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Role } from '@maintix/shared-types';
 import { Roles } from '@/common/decorators';
+import { CurrentUser, JwtPayload } from '@/common/decorators/current-user.decorator';
 import { PropertyGuard } from '@/common/guards/property.guard';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -27,10 +28,7 @@ export class CategoriesController {
   @Roles(Role.MANAGER)
   @UseGuards(PropertyGuard)
   @ApiOperation({ summary: 'Create category (manager only)' })
-  create(
-    @Param('propertyId', ParseUUIDPipe) propertyId: string,
-    @Body() dto: CreateCategoryDto,
-  ) {
+  create(@Param('propertyId', ParseUUIDPipe) propertyId: string, @Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(propertyId, dto);
   }
 
@@ -47,14 +45,15 @@ export class CategoriesController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCategoryDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.categoriesService.update(id, dto);
+    return this.categoriesService.update(id, dto, user.sub);
   }
 
   @Delete('categories/:id')
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'Delete category (manager only)' })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.categoriesService.softDelete(id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.categoriesService.softDelete(id, user.sub);
   }
 }

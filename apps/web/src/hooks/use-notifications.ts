@@ -19,10 +19,7 @@ interface NotificationsResponse {
 export function useNotifications(unreadOnly = false) {
   return useQuery({
     queryKey: ['notifications', { unreadOnly }],
-    queryFn: () =>
-      api.get<NotificationsResponse>(
-        `/notifications?unreadOnly=${unreadOnly}`,
-      ),
+    queryFn: () => api.get<NotificationsResponse>(`/notifications?unreadOnly=${unreadOnly}`),
     refetchInterval: 30000, // Poll every 30s
   });
 }

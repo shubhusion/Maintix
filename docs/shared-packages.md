@@ -35,15 +35,27 @@ enum Priority {
 }
 
 enum ActivityAction {
-  TICKET_CREATED, TECHNICIAN_ASSIGNED, TECHNICIAN_REASSIGNED,
-  WORK_STARTED, COMPLETION_SUBMITTED, TICKET_APPROVED,
-  TICKET_CANCELLED, PRIORITY_CHANGED, ATTACHMENT_ADDED, ATTACHMENT_REMOVED
+  TICKET_CREATED,
+  TECHNICIAN_ASSIGNED,
+  TECHNICIAN_REASSIGNED,
+  WORK_STARTED,
+  COMPLETION_SUBMITTED,
+  TICKET_APPROVED,
+  TICKET_CANCELLED,
+  PRIORITY_CHANGED,
+  ATTACHMENT_ADDED,
+  ATTACHMENT_REMOVED,
 }
 
 enum NotificationType {
-  TICKET_CREATED, TICKET_ASSIGNED, WORK_STARTED,
-  COMPLETION_SUBMITTED, TICKET_APPROVED, TICKET_CANCELLED,
-  PRIORITY_CHANGED, TECHNICIAN_REASSIGNED
+  TICKET_CREATED,
+  TICKET_ASSIGNED,
+  WORK_STARTED,
+  COMPLETION_SUBMITTED,
+  TICKET_APPROVED,
+  TICKET_CANCELLED,
+  PRIORITY_CHANGED,
+  TECHNICIAN_REASSIGNED,
 }
 ```
 
@@ -76,29 +88,29 @@ interface ApiErrorResponse {
 
 All typed error codes used by `BusinessException` on the API and `ApiError` on the frontend:
 
-| Category | Codes |
-|----------|-------|
-| **Auth** | `INVALID_CREDENTIALS`, `USER_INACTIVE`, `TOKEN_EXPIRED`, `TOKEN_INVALID` |
-| **Authorization** | `FORBIDDEN`, `ROLE_NOT_ALLOWED`, `PROPERTY_ACCESS_DENIED` |
-| **Users** | `USER_NOT_FOUND`, `EMAIL_ALREADY_EXISTS`, `CANNOT_CREATE_MANAGER` |
-| **Properties** | `PROPERTY_NOT_FOUND`, `ALREADY_PROPERTY_MEMBER`, `NOT_PROPERTY_MEMBER` |
-| **Categories** | `CATEGORY_NOT_FOUND`, `CATEGORY_NAME_EXISTS` |
-| **Tickets** | `TICKET_NOT_FOUND`, `TICKET_INVALID_TRANSITION`, `TICKET_VERSION_CONFLICT`, `TICKET_NOT_CANCELLABLE`, `TECHNICIAN_NOT_ASSIGNEE`, `ASSIGNEE_NOT_TECHNICIAN`, `ASSIGNEE_NOT_PROPERTY_MEMBER` |
-| **Uploads** | `UPLOAD_SIZE_EXCEEDED`, `UPLOAD_TYPE_NOT_ALLOWED`, `UPLOAD_LIMIT_REACHED`, `ATTACHMENT_NOT_FOUND` |
-| **General** | `VALIDATION_ERROR`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR` |
+| Category          | Codes                                                                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Auth**          | `INVALID_CREDENTIALS`, `USER_INACTIVE`, `TOKEN_EXPIRED`, `TOKEN_INVALID`                                                                                                                   |
+| **Authorization** | `FORBIDDEN`, `ROLE_NOT_ALLOWED`, `PROPERTY_ACCESS_DENIED`                                                                                                                                  |
+| **Users**         | `USER_NOT_FOUND`, `EMAIL_ALREADY_EXISTS`, `CANNOT_CREATE_MANAGER`                                                                                                                          |
+| **Properties**    | `PROPERTY_NOT_FOUND`, `ALREADY_PROPERTY_MEMBER`, `NOT_PROPERTY_MEMBER`                                                                                                                     |
+| **Categories**    | `CATEGORY_NOT_FOUND`, `CATEGORY_NAME_EXISTS`                                                                                                                                               |
+| **Tickets**       | `TICKET_NOT_FOUND`, `TICKET_INVALID_TRANSITION`, `TICKET_VERSION_CONFLICT`, `TICKET_NOT_CANCELLABLE`, `TECHNICIAN_NOT_ASSIGNEE`, `ASSIGNEE_NOT_TECHNICIAN`, `ASSIGNEE_NOT_PROPERTY_MEMBER` |
+| **Uploads**       | `UPLOAD_SIZE_EXCEEDED`, `UPLOAD_TYPE_NOT_ALLOWED`, `UPLOAD_LIMIT_REACHED`, `ATTACHMENT_NOT_FOUND`                                                                                          |
+| **General**       | `VALIDATION_ERROR`, `RATE_LIMIT_EXCEEDED`, `INTERNAL_ERROR`                                                                                                                                |
 
 ### Constants
 
 ```typescript
-const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;          // 5 MB
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_ATTACHMENTS_PER_TICKET = 5;
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 
 const RATE_LIMITS = {
-  LOGIN:           { ttl: 60_000, limit: 5 },
+  LOGIN: { ttl: 60_000, limit: 5 },
   TICKET_CREATION: { ttl: 60_000, limit: 10 },
-  GENERAL:         { ttl: 60_000, limit: 30 },
+  GENERAL: { ttl: 60_000, limit: 30 },
 };
 
 const PAGINATION = {
@@ -119,11 +131,11 @@ Prisma schema and client generation. This package is not directly imported by th
 
 ### Contents
 
-| File | Purpose |
-|------|---------|
+| File                   | Purpose                                    |
+| ---------------------- | ------------------------------------------ |
 | `prisma/schema.prisma` | Database schema (models, enums, relations) |
-| `prisma/seed.ts` | Seed script for initial manager account |
-| `src/index.ts` | Re-exports Prisma client |
+| `prisma/seed.ts`       | Seed script for initial manager account    |
+| `src/index.ts`         | Re-exports Prisma client                   |
 
 ### Usage in API
 
@@ -148,11 +160,11 @@ export class UsersService {
 
 Shared TypeScript configuration presets.
 
-| File | Used By | Key Settings |
-|------|---------|-------------|
-| `base.json` | All packages | `strict: true`, `esModuleInterop`, `skipLibCheck` |
-| `nestjs.json` | `apps/api` | Extends base, `module: commonjs`, `declaration: true`, `outDir: dist` |
-| `nextjs.json` | `apps/web` | Extends base, `jsx: preserve`, Next.js plugin |
+| File          | Used By      | Key Settings                                                          |
+| ------------- | ------------ | --------------------------------------------------------------------- |
+| `base.json`   | All packages | `strict: true`, `esModuleInterop`, `skipLibCheck`                     |
+| `nestjs.json` | `apps/api`   | Extends base, `module: commonjs`, `declaration: true`, `outDir: dist` |
+| `nextjs.json` | `apps/web`   | Extends base, `jsx: preserve`, Next.js plugin                         |
 
 ### Usage
 

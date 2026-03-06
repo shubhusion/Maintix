@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint API
+        run: pnpm --filter @maintix/api lint
+
+      - name: Build shared packages
+        run: pnpm --filter @maintix/shared-types build
+
+      - name: Run unit tests
+        run: pnpm --filter @maintix/api test -- --passWithNoTests
+
+      - name: Build API
+        run: pnpm --filter @maintix/api build
+
+      - name: Build Web
+        run: pnpm --filter @maintix/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1

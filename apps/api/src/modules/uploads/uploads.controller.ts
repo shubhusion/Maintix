@@ -32,26 +32,21 @@ export class UploadsController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.uploadsService.uploadTicketAttachment(
-      ticketId,
-      propertyId,
-      file,
-      user.sub,
-    );
+    return this.uploadsService.uploadTicketAttachment(ticketId, propertyId, file, user.sub);
   }
 
   @Get('tickets/:ticketId/attachments')
   @ApiOperation({ summary: 'Get attachments for a ticket' })
-  getAttachments(@Param('ticketId', ParseUUIDPipe) ticketId: string) {
-    return this.uploadsService.getAttachments(ticketId);
+  getAttachments(
+    @Param('ticketId', ParseUUIDPipe) ticketId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.uploadsService.getAttachments(ticketId, user.sub);
   }
 
   @Delete('attachments/:id')
   @ApiOperation({ summary: 'Delete an attachment' })
-  delete(
-    @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  delete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
     return this.uploadsService.deleteAttachment(id, user.sub);
   }
 }

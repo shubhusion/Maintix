@@ -31,19 +31,19 @@ Maintix is a **pnpm monorepo** managed by **Turborepo** containing two applicati
 
 ### Applications
 
-| App | Path | Stack | Port |
-|-----|------|-------|------|
-| **API** | `apps/api/` | NestJS 10, TypeScript 5, Prisma 6 | 3001 |
+| App     | Path        | Stack                                | Port |
+| ------- | ----------- | ------------------------------------ | ---- |
+| **API** | `apps/api/` | NestJS 10, TypeScript 5, Prisma 6    | 3001 |
 | **Web** | `apps/web/` | Next.js 15, React 19, Tailwind CSS 4 | 3000 |
 
 ### Packages
 
-| Package | Path | Purpose |
-|---------|------|---------|
-| `@maintix/database` | `packages/database/` | Prisma schema, client generation, seed script |
-| `@maintix/shared-types` | `packages/shared-types/` | Enums, TypeScript types, error codes, constants |
-| `@maintix/tsconfig` | `packages/tsconfig/` | Shared `tsconfig.json` presets (base, NestJS, Next.js) |
-| `@maintix/eslint-config` | `packages/eslint-config/` | Shared ESLint configuration |
+| Package                  | Path                      | Purpose                                                |
+| ------------------------ | ------------------------- | ------------------------------------------------------ |
+| `@maintix/database`      | `packages/database/`      | Prisma schema, client generation, seed script          |
+| `@maintix/shared-types`  | `packages/shared-types/`  | Enums, TypeScript types, error codes, constants        |
+| `@maintix/tsconfig`      | `packages/tsconfig/`      | Shared `tsconfig.json` presets (base, NestJS, Next.js) |
+| `@maintix/eslint-config` | `packages/eslint-config/` | Shared ESLint configuration                            |
 
 ### Dependency Graph
 
@@ -67,9 +67,9 @@ Turborepo orchestrates builds with dependency-aware task execution:
 ```json
 {
   "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
-  "dev":   { "cache": false, "persistent": true },
-  "lint":  { "dependsOn": ["^build"] },
-  "test":  { "dependsOn": ["^build"] }
+  "dev": { "cache": false, "persistent": true },
+  "lint": { "dependsOn": ["^build"] },
+  "test": { "dependsOn": ["^build"] }
 }
 ```
 
@@ -270,16 +270,16 @@ Component
 
 ### Key Frontend Patterns
 
-| Pattern | Implementation |
-|---------|---------------|
-| **Auth** | JWT in localStorage, `AuthProvider` context, `AuthGuard` HOC |
-| **Data Fetching** | TanStack Query with 30s stale time, auto-refetch |
-| **Forms** | react-hook-form + Zod schemas for validation |
-| **Theming** | next-themes with `dark`/`light`/`system` + Tailwind CSS `dark:` variants |
-| **Animations** | Framer Motion + Magic UI components |
-| **Notifications** | Polling (15-30s), real-time via TanStack Query refetch |
-| **Pagination** | Cursor-based with `useInfiniteQuery` |
-| **UI Components** | Radix UI primitives, shadcn/ui patterns, Magic UI effects |
+| Pattern           | Implementation                                                           |
+| ----------------- | ------------------------------------------------------------------------ |
+| **Auth**          | JWT in localStorage, `AuthProvider` context, `AuthGuard` HOC             |
+| **Data Fetching** | TanStack Query with 30s stale time, auto-refetch                         |
+| **Forms**         | react-hook-form + Zod schemas for validation                             |
+| **Theming**       | next-themes with `dark`/`light`/`system` + Tailwind CSS `dark:` variants |
+| **Animations**    | Framer Motion + Magic UI components                                      |
+| **Notifications** | Polling (15-30s), real-time via TanStack Query refetch                   |
+| **Pagination**    | Cursor-based with `useInfiniteQuery`                                     |
+| **UI Components** | Radix UI primitives, shadcn/ui patterns, Magic UI effects                |
 
 ## Infrastructure
 
@@ -289,7 +289,7 @@ Component
 services:
   postgres:
     image: postgres:16-alpine
-    ports: ["5432:5432"]
+    ports: ['5432:5432']
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -302,18 +302,18 @@ services:
 
 #### API (`apps/api/.env`)
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | — | Minimum 32 characters |
-| `JWT_EXPIRATION` | No | `24h` | Token TTL |
-| `SUPABASE_URL` | Yes | — | Supabase project URL |
-| `SUPABASE_SERVICE_KEY` | Yes | — | Supabase service role key |
-| `CORS_ORIGIN` | No | `http://localhost:3000` | Allowed CORS origin |
-| `PORT` | No | `3001` | API server port |
+| Variable               | Required | Default                 | Description                  |
+| ---------------------- | -------- | ----------------------- | ---------------------------- |
+| `DATABASE_URL`         | Yes      | —                       | PostgreSQL connection string |
+| `JWT_SECRET`           | Yes      | —                       | Minimum 32 characters        |
+| `JWT_EXPIRATION`       | No       | `24h`                   | Token TTL                    |
+| `SUPABASE_URL`         | Yes      | —                       | Supabase project URL         |
+| `SUPABASE_SERVICE_KEY` | Yes      | —                       | Supabase service role key    |
+| `CORS_ORIGIN`          | No       | `http://localhost:3000` | Allowed CORS origin          |
+| `PORT`                 | No       | `3001`                  | API server port              |
 
 #### Web (`apps/web/.env`)
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | No | `http://localhost:3001/api/v1` | API base URL |
+| Variable              | Required | Default                        | Description  |
+| --------------------- | -------- | ------------------------------ | ------------ |
+| `NEXT_PUBLIC_API_URL` | No       | `http://localhost:3001/api/v1` | API base URL |

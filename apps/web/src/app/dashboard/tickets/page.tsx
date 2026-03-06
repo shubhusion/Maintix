@@ -6,8 +6,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Ticket, ArrowUpDown, Search } from 'lucide-react';
 import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
 import { useProperties } from '@/hooks/use-properties';
-import { useInfiniteTickets, useAllPropertyTickets, useCreateTicket, type TicketQueryParams } from '@/hooks/use-tickets';
+import {
+  useInfiniteTickets,
+  useAllPropertyTickets,
+  useCreateTicket,
+  type TicketQueryParams,
+} from '@/hooks/use-tickets';
 import { useCategories } from '@/hooks/use-categories';
 import { createTicketSchema, type CreateTicketFormData } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
@@ -69,10 +75,10 @@ export default function TicketsPage() {
     isFetchingNextPage,
   } = useInfiniteTickets(isAllProperties ? '' : selectedPropertyId, queryParams);
 
-  const {
-    tickets: allTickets,
-    isLoading: isAllLoading,
-  } = useAllPropertyTickets(isAllProperties ? allPropertyIds : [], queryParams);
+  const { tickets: allTickets, isLoading: isAllLoading } = useAllPropertyTickets(
+    isAllProperties ? allPropertyIds : [],
+    queryParams,
+  );
 
   const { data: categories } = useCategories(isAllProperties ? '' : selectedPropertyId);
   const createTicket = useCreateTicket(isAllProperties ? '' : selectedPropertyId);
@@ -109,9 +115,7 @@ export default function TicketsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-muted-foreground">
-            Maintenance requests across your properties.
-          </p>
+          <p className="text-muted-foreground">Maintenance requests across your properties.</p>
         </div>
         {selectedPropertyId && !isAllProperties && (
           <Button onClick={() => setDialogOpen(true)}>
@@ -134,7 +138,7 @@ export default function TicketsPage() {
         </div>
 
         <Select value={selectedPropertyId} onValueChange={setSelectedPropertyId}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Select property" />
           </SelectTrigger>
           <SelectContent>
@@ -148,7 +152,7 @@ export default function TicketsPage() {
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -162,7 +166,7 @@ export default function TicketsPage() {
         </Select>
 
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue placeholder="Priority" />
           </SelectTrigger>
           <SelectContent>
@@ -183,7 +187,7 @@ export default function TicketsPage() {
             setSortDir(dir);
           }}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -206,20 +210,19 @@ export default function TicketsPage() {
       ) : tickets.length > 0 ? (
         <div className="space-y-3">
           {tickets.map((ticket) => (
-            <Link
-              key={ticket.id}
-              href={`/dashboard/tickets/${ticket.id}`}
-            >
+            <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`}>
               <div className="flex items-center justify-between rounded-lg border p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{ticket.title}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {isAllProperties && ticket.property?.name && (
-                      <span className="font-medium text-foreground/70">{ticket.property.name} · </span>
+                      <span className="font-medium text-foreground/70">
+                        {ticket.property.name} ·{' '}
+                      </span>
                     )}
                     {ticket.category?.name} · {ticket.createdBy?.firstName}{' '}
                     {ticket.createdBy?.lastName} ·{' '}
-                    {new Date(ticket.createdAt).toLocaleDateString()}
+                    {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
                   </p>
                 </div>
                 <div className="ml-4 flex items-center gap-3">
@@ -259,9 +262,7 @@ export default function TicketsPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Ticket className="mb-4 h-12 w-12 text-muted-foreground/50" />
             <h3 className="mb-1 text-lg font-medium">No tickets</h3>
-            <p className="text-sm text-muted-foreground">
-              Create your first maintenance ticket.
-            </p>
+            <p className="text-sm text-muted-foreground">Create your first maintenance ticket.</p>
           </CardContent>
         </Card>
       )}
@@ -275,18 +276,20 @@ export default function TicketsPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title <span className="text-error-500">*</span></Label>
+              <Label htmlFor="title">
+                Title <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="title"
                 placeholder="e.g. Leaking faucet in unit 3B"
                 {...register('title')}
               />
-              {errors.title && (
-                <p className="text-sm text-error-500">{errors.title.message}</p>
-              )}
+              {errors.title && <p className="text-sm text-error-500">{errors.title.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description <span className="text-error-500">*</span></Label>
+              <Label htmlFor="description">
+                Description <span className="text-error-500">*</span>
+              </Label>
               <Textarea
                 id="description"
                 placeholder="Describe the issue in detail..."
@@ -294,13 +297,13 @@ export default function TicketsPage() {
                 {...register('description')}
               />
               {errors.description && (
-                <p className="text-sm text-error-500">
-                  {errors.description.message}
-                </p>
+                <p className="text-sm text-error-500">{errors.description.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label>Category <span className="text-error-500">*</span></Label>
+              <Label>
+                Category <span className="text-error-500">*</span>
+              </Label>
               <Select onValueChange={(val) => setValue('categoryId', val)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -314,17 +317,11 @@ export default function TicketsPage() {
                 </SelectContent>
               </Select>
               {errors.categoryId && (
-                <p className="text-sm text-error-500">
-                  {errors.categoryId.message}
-                </p>
+                <p className="text-sm text-error-500">{errors.categoryId.message}</p>
               )}
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

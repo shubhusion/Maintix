@@ -125,11 +125,7 @@ export class PropertiesService {
       where: { id: dto.userId, deletedAt: null },
     });
     if (!user) {
-      throw new BusinessException(
-        'User not found',
-        ErrorCode.USER_NOT_FOUND,
-        HttpStatus.NOT_FOUND,
-      );
+      throw new BusinessException('User not found', ErrorCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     // Check not already a member

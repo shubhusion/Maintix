@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '@/common/database/prisma.service';
 import { BusinessException } from '@/common/exceptions/business.exception';
 import { ErrorCode } from '@maintix/shared-types';

@@ -25,10 +25,7 @@ export class MembersController {
   @Post()
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'Add a member to property (manager only)' })
-  addMember(
-    @Param('propertyId', ParseUUIDPipe) propertyId: string,
-    @Body() dto: AddMemberDto,
-  ) {
+  addMember(@Param('propertyId', ParseUUIDPipe) propertyId: string, @Body() dto: AddMemberDto) {
     return this.propertiesService.addMember(propertyId, dto);
   }
 

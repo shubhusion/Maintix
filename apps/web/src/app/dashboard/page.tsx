@@ -2,22 +2,28 @@
 
 import { Building2, Ticket, Users, Clock, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TicketStatusChart } from '@/components/ticket-status-chart';
 import { useAuth } from '@/contexts/auth-context';
 import { useProperties } from '@/hooks/use-properties';
-import { Role } from '@maintix/shared-types';
+import { useAllPropertyTickets } from '@/hooks/use-tickets';
+import { Role, TicketStatus } from '@maintix/shared-types';
 import Link from 'next/link';
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { data: properties } = useProperties();
+  const { data: properties, isLoading } = useProperties();
+  const propertyIds = properties?.map((p) => p.id) ?? [];
+  const { tickets, isLoading: ticketsLoading } = useAllPropertyTickets(propertyIds);
+
+  const openCount = tickets.filter((t) => t.status === TicketStatus.OPEN).length;
+  const awaitingCount = tickets.filter((t) => t.status === TicketStatus.AWAITING_APPROVAL).length;
 
   return (
     <div className="space-y-8">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back, {user?.firstName}
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user?.firstName}</h1>
         <p className="text-muted-foreground">
           Here&apos;s an overview of your maintenance platform.
         </p>
@@ -35,9 +41,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tracking-tight">{properties?.length ?? 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total properties
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">Total properties</p>
           </CardContent>
         </Card>
 
@@ -50,10 +54,10 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">—</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Select a property to view
-            </p>
+            <div className="text-3xl font-bold tracking-tight">
+              {ticketsLoading ? '—' : openCount}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Across all properties</p>
           </CardContent>
         </Card>
 
@@ -62,52 +66,59 @@ export default function DashboardPage() {
             <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/20">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Pending Approval
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-500/10">
                   <Clock className="h-4 w-4 text-accent-500" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">—</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Awaiting your review
-                </p>
+                <div className="text-3xl font-bold tracking-tight">
+                  {ticketsLoading ? '—' : awaitingCount}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Awaiting your review</p>
               </CardContent>
             </Card>
 
             <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/20">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Team Members
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Team Members</CardTitle>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
                   <Users className="h-4 w-4 text-primary" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold tracking-tight">—</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Across all properties
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Across all properties</p>
               </CardContent>
             </Card>
           </>
         )}
       </div>
 
+      {/* Ticket Status Chart */}
+      {propertyIds.length > 0 && <TicketStatusChart tickets={tickets} />}
+
       {/* Quick Actions / Properties List */}
       <div>
         <h2 className="mb-4 text-lg font-semibold">Your Properties</h2>
-        {properties && properties.length > 0 ? (
+        {isLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-5 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-48" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : properties && properties.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => (
-              <Link
-                key={property.id}
-                href={`/dashboard/properties/${property.id}`}
-              >
+              <Link key={property.id} href={`/dashboard/properties/${property.id}`}>
                 <Card className="group cursor-pointer transition-all duration-300 hover:border-primary/30 hover:shadow-md">
                   <CardHeader>
                     <CardTitle className="text-base flex items-center justify-between">
@@ -116,9 +127,7 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {property.address}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{property.address}</p>
                   </CardContent>
                 </Card>
               </Link>

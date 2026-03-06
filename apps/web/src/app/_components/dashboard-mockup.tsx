@@ -1,23 +1,40 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  BarChart3,
-  ClipboardList,
-  Building2,
-  Users,
-  Layers,
-  type LucideIcon,
-} from 'lucide-react';
+import { BarChart3, ClipboardList, Building2, Users, Layers, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BorderBeam } from '@/components/ui/border-beam';
 
 export function DashboardMockup() {
   const tickets = [
-    { id: 'TK-2847', title: 'Broken AC unit in 4B', status: 'In Progress', color: '#ef4444', statusColor: '#818cf8' },
-    { id: 'TK-2846', title: 'Leaking faucet — kitchen', status: 'Assigned', color: '#f59e0b', statusColor: '#f59e0b' },
-    { id: 'TK-2845', title: 'Replace hallway lighting', status: 'Open', color: '#22c55e', statusColor: '#a3a3a3' },
-    { id: 'TK-2844', title: 'Elevator maintenance due', status: 'Completed', color: '#ef4444', statusColor: '#22c55e' },
+    {
+      id: 'TK-2847',
+      title: 'Broken AC unit in 4B',
+      status: 'In Progress',
+      color: '#ef4444',
+      statusColor: '#818cf8',
+    },
+    {
+      id: 'TK-2846',
+      title: 'Leaking faucet — kitchen',
+      status: 'Assigned',
+      color: '#f59e0b',
+      statusColor: '#f59e0b',
+    },
+    {
+      id: 'TK-2845',
+      title: 'Replace hallway lighting',
+      status: 'Open',
+      color: '#22c55e',
+      statusColor: '#a3a3a3',
+    },
+    {
+      id: 'TK-2844',
+      title: 'Elevator maintenance due',
+      status: 'Completed',
+      color: '#ef4444',
+      statusColor: '#22c55e',
+    },
   ];
 
   const sidebarItems: { label: string; icon: LucideIcon }[] = [

@@ -181,10 +181,7 @@ export function ActivityTimeline({ ticketId }: { ticketId: string }) {
                 const isLast = index === activities.length - 1;
 
                 return (
-                  <div
-                    key={activity.id}
-                    className={`relative flex gap-3 ${isLast ? '' : 'pb-5'}`}
-                  >
+                  <div key={activity.id} className={`relative flex gap-3 ${isLast ? '' : 'pb-5'}`}>
                     {/* Icon node */}
                     <div
                       className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.bgColor}`}
@@ -198,14 +195,10 @@ export function ActivityTimeline({ ticketId }: { ticketId: string }) {
                         <span className="font-medium">
                           {activity.actor.firstName} {activity.actor.lastName}
                         </span>{' '}
-                        <span className="text-muted-foreground">
-                          {config.label.toLowerCase()}
-                        </span>
+                        <span className="text-muted-foreground">{config.label.toLowerCase()}</span>
                       </p>
                       {detail && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {detail}
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{detail}</p>
                       )}
                       <p className="text-xs text-muted-foreground/70 mt-0.5">
                         {formatRelativeTime(activity.createdAt)}

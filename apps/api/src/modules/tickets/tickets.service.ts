@@ -2,13 +2,7 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@/common/database/prisma.service';
 import { BusinessException } from '@/common/exceptions/business.exception';
-import {
-  ErrorCode,
-  Role,
-  TicketStatus,
-  Priority,
-  ActivityAction,
-} from '@maintix/shared-types';
+import { ErrorCode, Role, TicketStatus, Priority, ActivityAction } from '@maintix/shared-types';
 import { TicketStateMachine } from './ticket-state-machine';
 import { TicketActivityService } from './ticket-activity.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -119,14 +113,12 @@ export class TicketsService {
       data,
       meta: {
         hasMore,
-        nextCursor: hasMore
-          ? data[data.length - 1].createdAt.toISOString()
-          : null,
+        nextCursor: hasMore ? data[data.length - 1].createdAt.toISOString() : null,
       },
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id, deletedAt: null },
       include: {
@@ -143,6 +135,20 @@ export class TicketsService {
         ErrorCode.TICKET_NOT_FOUND,
         HttpStatus.NOT_FOUND,
       );
+    }
+
+    // Validate user is a member of the ticket's property
+    if (userId) {
+      const membership = await this.prisma.propertyMember.findUnique({
+        where: { propertyId_userId: { propertyId: ticket.propertyId, userId } },
+      });
+      if (!membership) {
+        throw new BusinessException(
+          'You do not have access to this ticket',
+          ErrorCode.PROPERTY_ACCESS_DENIED,
+          HttpStatus.FORBIDDEN,
+        );
+      }
     }
 
     return ticket;
@@ -281,10 +287,7 @@ export class TicketsService {
     }
 
     // Can only cancel from OPEN or ASSIGNED
-    if (
-      ticket.status !== TicketStatus.OPEN &&
-      ticket.status !== TicketStatus.ASSIGNED
-    ) {
+    if (ticket.status !== TicketStatus.OPEN && ticket.status !== TicketStatus.ASSIGNED) {
       throw new BusinessException(
         'Ticket can only be cancelled when OPEN or ASSIGNED',
         ErrorCode.TICKET_NOT_CANCELLABLE,
@@ -358,10 +361,7 @@ export class TicketsService {
     const ticket = await this.getTicketForTransition(ticketId, expectedVersion);
 
     // Can only reassign when ASSIGNED or IN_PROGRESS
-    if (
-      ticket.status !== TicketStatus.ASSIGNED &&
-      ticket.status !== TicketStatus.IN_PROGRESS
-    ) {
+    if (ticket.status !== TicketStatus.ASSIGNED && ticket.status !== TicketStatus.IN_PROGRESS) {
       throw new BusinessException(
         'Can only reassign when ticket is ASSIGNED or IN_PROGRESS',
         ErrorCode.TICKET_INVALID_TRANSITION,

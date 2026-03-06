@@ -71,8 +71,8 @@ export function HeroSection({
 
         <BlurFade delay={0.2} direction="down">
           <p className="mt-5 text-center text-base md:text-lg text-foreground/70 dark:text-neutral-400 max-w-xl leading-relaxed">
-            Resolve tickets 3× faster with role-based workflows that keep
-            managers, technicians, and tenants in sync.
+            Resolve tickets 3× faster with role-based workflows that keep managers, technicians, and
+            tenants in sync.
           </p>
         </BlurFade>
 

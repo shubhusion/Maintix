@@ -4,12 +4,12 @@ Complete setup guide for running Maintix locally.
 
 ## Prerequisites
 
-| Tool | Version | Install |
-|------|---------|---------|
-| **Node.js** | ≥ 20.0.0 | [nodejs.org](https://nodejs.org) |
-| **pnpm** | ≥ 10.30.0 | `npm install -g pnpm` |
-| **Docker** | Latest | [docker.com](https://www.docker.com/get-started) |
-| **Git** | Latest | [git-scm.com](https://git-scm.com) |
+| Tool        | Version   | Install                                          |
+| ----------- | --------- | ------------------------------------------------ |
+| **Node.js** | ≥ 20.0.0  | [nodejs.org](https://nodejs.org)                 |
+| **pnpm**    | ≥ 10.30.0 | `npm install -g pnpm`                            |
+| **Docker**  | Latest    | [docker.com](https://www.docker.com/get-started) |
+| **Git**     | Latest    | [git-scm.com](https://git-scm.com)               |
 
 You'll also need a **Supabase** project for file storage (free tier works).
 
@@ -37,6 +37,7 @@ docker compose up -d
 ```
 
 This starts a PostgreSQL 16 container:
+
 - **Host**: `localhost`
 - **Port**: `5432`
 - **User**: `postgres`
@@ -73,6 +74,7 @@ CORS_ORIGIN=http://localhost:3000
 ```
 
 > **JWT_SECRET** must be at least 32 characters. Generate one:
+>
 > ```bash
 > node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 > ```
@@ -103,6 +105,7 @@ pnpm dev
 ```
 
 This starts both apps concurrently via Turborepo:
+
 - **Frontend**: http://localhost:3000
 - **API**: http://localhost:3001/api/v1
 - **Swagger**: http://localhost:3001/api/docs
@@ -111,8 +114,8 @@ This starts both apps concurrently via Turborepo:
 
 Use the seed credentials:
 
-| Email | Password |
-|-------|----------|
+| Email               | Password                |
+| ------------------- | ----------------------- |
 | `admin@Maintix.com` | `ChangeThisPassword123` |
 
 ---
@@ -128,6 +131,7 @@ Go to [supabase.com](https://supabase.com) and create a new project.
 ### 2. Create a Storage Bucket
 
 In the Supabase dashboard:
+
 1. Go to **Storage** → **New Bucket**
 2. Create a bucket named `ticket-attachments`
 3. Set it to **Public** (or configure RLS policies as needed)
@@ -135,6 +139,7 @@ In the Supabase dashboard:
 ### 3. Get Your Keys
 
 From **Project Settings** → **API**:
+
 - **Project URL** → `SUPABASE_URL`
 - **Service Role Key** → `SUPABASE_SERVICE_KEY`
 
@@ -144,32 +149,32 @@ From **Project Settings** → **API**:
 
 ### Development
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start all apps in watch mode |
-| `pnpm build` | Build all packages and apps |
-| `pnpm lint` | Lint all packages |
-| `pnpm test` | Run all test suites |
-| `pnpm format` | Format code with Prettier |
+| Command       | Description                  |
+| ------------- | ---------------------------- |
+| `pnpm dev`    | Start all apps in watch mode |
+| `pnpm build`  | Build all packages and apps  |
+| `pnpm lint`   | Lint all packages            |
+| `pnpm test`   | Run all test suites          |
+| `pnpm format` | Format code with Prettier    |
 
 ### Database
 
-| Command | Description |
-|---------|-------------|
-| `pnpm db:generate` | Regenerate Prisma client |
-| `pnpm db:push` | Push schema changes (dev) |
-| `pnpm db:migrate` | Run production migrations |
-| `pnpm db:seed` | Seed default data |
-| `pnpm db:studio` | Open Prisma Studio GUI (localhost:5555) |
+| Command            | Description                             |
+| ------------------ | --------------------------------------- |
+| `pnpm db:generate` | Regenerate Prisma client                |
+| `pnpm db:push`     | Push schema changes (dev)               |
+| `pnpm db:migrate`  | Run production migrations               |
+| `pnpm db:seed`     | Seed default data                       |
+| `pnpm db:studio`   | Open Prisma Studio GUI (localhost:5555) |
 
 ### Docker
 
-| Command | Description |
-|---------|-------------|
-| `docker compose up -d` | Start PostgreSQL in background |
-| `docker compose down` | Stop PostgreSQL |
-| `docker compose down -v` | Stop + remove data volume |
-| `docker compose logs postgres` | View PostgreSQL logs |
+| Command                        | Description                    |
+| ------------------------------ | ------------------------------ |
+| `docker compose up -d`         | Start PostgreSQL in background |
+| `docker compose down`          | Stop PostgreSQL                |
+| `docker compose down -v`       | Stop + remove data volume      |
+| `docker compose logs postgres` | View PostgreSQL logs           |
 
 ### Individual Apps
 

@@ -11,6 +11,14 @@ interface User {
   createdAt: string;
 }
 
+interface UserListResponse {
+  data: User[];
+  meta: {
+    hasMore: boolean;
+    nextCursor: string | null;
+  };
+}
+
 export function useUsers(search?: string) {
   return useQuery({
     queryKey: ['users', search],
@@ -18,7 +26,7 @@ export function useUsers(search?: string) {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       const qs = params.toString();
-      return api.get<User[]>(`/users${qs ? `?${qs}` : ''}`);
+      return api.get<UserListResponse>(`/users${qs ? `?${qs}` : ''}`);
     },
   });
 }

@@ -58,8 +58,11 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, dto: UpdateCategoryDto) {
+  async update(id: string, dto: UpdateCategoryDto, userId: string) {
     const category = await this.findOne(id);
+
+    // Validate user is a member of the category's property
+    await this.validatePropertyMembership(category.propertyId, userId);
 
     // Check name uniqueness if name is being updated
     if (dto.name) {
@@ -89,8 +92,11 @@ export class CategoriesService {
     });
   }
 
-  async softDelete(id: string) {
-    await this.findOne(id);
+  async softDelete(id: string, userId: string) {
+    const category = await this.findOne(id);
+
+    // Validate user is a member of the category's property
+    await this.validatePropertyMembership(category.propertyId, userId);
 
     await this.prisma.category.update({
       where: { id },
@@ -98,5 +104,19 @@ export class CategoriesService {
     });
 
     return { message: 'Category deleted successfully' };
+  }
+
+  private async validatePropertyMembership(propertyId: string, userId: string) {
+    const membership = await this.prisma.propertyMember.findUnique({
+      where: { propertyId_userId: { propertyId, userId } },
+    });
+
+    if (!membership) {
+      throw new BusinessException(
+        'You are not a member of this property',
+        ErrorCode.PROPERTY_ACCESS_DENIED,
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 }

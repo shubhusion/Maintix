@@ -24,13 +24,7 @@ import { loginSchema, type LoginFormData } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { DotPattern } from '@/components/ui/dot-pattern';
 import { ShineBorder } from '@/components/ui/shine-border';
@@ -119,8 +113,8 @@ export default function LoginPage() {
 
           <BlurFade delay={0.2} direction="right">
             <p className="mt-4 text-sm text-muted-foreground max-w-sm leading-relaxed">
-              Streamline maintenance workflows with role-based access for
-              managers, technicians, and tenants.
+              Streamline maintenance workflows with role-based access for managers, technicians, and
+              tenants.
             </p>
           </BlurFade>
 
@@ -143,8 +137,8 @@ export default function LoginPage() {
             <div className="mt-10 rounded-xl border border-border/30 bg-card/40 dark:border-white/[0.06] dark:bg-white/[0.03] backdrop-blur-md p-5 max-w-sm">
               <Quote className="h-5 w-5 text-primary-400/60 mb-2" />
               <p className="text-sm text-foreground/80 dark:text-neutral-300 leading-relaxed italic">
-                &ldquo;Maintix saved us 10 hours per week on maintenance
-                coordination. The ticket workflow is a game-changer.&rdquo;
+                &ldquo;Maintix saved us 10 hours per week on maintenance coordination. The ticket
+                workflow is a game-changer.&rdquo;
               </p>
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/10 text-xs font-bold text-primary-600 dark:text-primary-400">
@@ -202,11 +196,7 @@ export default function LoginPage() {
           <div className="w-full max-w-[420px]">
             <BlurFade delay={0.05}>
               <Card className="relative rounded-2xl border-border/50 bg-card/80 backdrop-blur-xl shadow-xl overflow-hidden">
-                <ShineBorder
-                  shineColor={['#6366f1', '#34d399']}
-                  borderWidth={1}
-                  duration={12}
-                />
+                <ShineBorder shineColor={['#6366f1', '#34d399']} borderWidth={1} duration={12} />
 
                 <CardHeader className="text-center pb-2">
                   <BlurFade delay={0.1}>
@@ -223,9 +213,7 @@ export default function LoginPage() {
                     </CardTitle>
                   </BlurFade>
                   <BlurFade delay={0.2}>
-                    <CardDescription>
-                      Sign in to your maintenance platform
-                    </CardDescription>
+                    <CardDescription>Sign in to your maintenance platform</CardDescription>
                   </BlurFade>
                 </CardHeader>
 
@@ -268,9 +256,7 @@ export default function LoginPage() {
                           />
                         </div>
                         {errors.email && (
-                          <p className="text-sm text-error-500">
-                            {errors.email.message}
-                          </p>
+                          <p className="text-sm text-error-500">{errors.email.message}</p>
                         )}
                       </div>
                     </BlurFade>
@@ -294,9 +280,7 @@ export default function LoginPage() {
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label={
-                              showPassword ? 'Hide password' : 'Show password'
-                            }
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
                           >
                             {showPassword ? (
                               <EyeOff className="h-4 w-4" />
@@ -306,9 +290,7 @@ export default function LoginPage() {
                           </button>
                         </div>
                         {errors.password && (
-                          <p className="text-sm text-error-500">
-                            {errors.password.message}
-                          </p>
+                          <p className="text-sm text-error-500">{errors.password.message}</p>
                         )}
                       </div>
                     </BlurFade>
@@ -367,23 +349,16 @@ export default function LoginPage() {
             <BlurFade delay={0.35}>
               <div className="mt-6 flex flex-col items-center gap-2">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <Link
-                    href="#"
-                    className="hover:text-foreground transition-colors"
-                  >
+                  <Link href="#" className="hover:text-foreground transition-colors">
                     Privacy Policy
                   </Link>
                   <span aria-hidden="true">&middot;</span>
-                  <Link
-                    href="#"
-                    className="hover:text-foreground transition-colors"
-                  >
+                  <Link href="#" className="hover:text-foreground transition-colors">
                     Terms of Service
                   </Link>
                 </div>
                 <p className="text-xs text-muted-foreground lg:hidden">
-                  &copy; {new Date().getFullYear()} Maintix. All rights
-                  reserved.
+                  &copy; {new Date().getFullYear()} Maintix. All rights reserved.
                 </p>
               </div>
             </BlurFade>

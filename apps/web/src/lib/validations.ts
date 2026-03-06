@@ -47,10 +47,7 @@ export type CreateCategoryFormData = z.infer<typeof createCategorySchema>;
 
 export const createTicketSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(200),
-  description: z
-    .string()
-    .min(10, 'Description must be at least 10 characters')
-    .max(5000),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
   categoryId: z.string().uuid('Select a category'),
 });
 
@@ -64,10 +61,7 @@ export const assignTicketSchema = z.object({
 export type AssignTicketFormData = z.infer<typeof assignTicketSchema>;
 
 export const cancelTicketSchema = z.object({
-  reason: z
-    .string()
-    .min(5, 'Reason must be at least 5 characters')
-    .max(1000),
+  reason: z.string().min(5, 'Reason must be at least 5 characters').max(1000),
   version: z.number(),
 });
 

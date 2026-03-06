@@ -4,8 +4,8 @@
 
 export const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
 export const MAX_ATTACHMENTS_PER_TICKET = 5;
-export const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-export const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+export const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+export const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
 
 export const RATE_LIMITS = {
   LOGIN: { ttl: 60_000, limit: 5 },

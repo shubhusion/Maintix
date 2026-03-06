@@ -15,16 +15,10 @@ export const metadata: Metadata = {
     'Streamline maintenance workflows across all your properties. Create tickets, assign technicians, and track progress in real-time.',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${dmSans.variable} font-sans antialiased`}
-      >
+      <body className={`${dmSans.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

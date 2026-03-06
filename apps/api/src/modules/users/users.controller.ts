@@ -15,6 +15,8 @@ import { Roles, CurrentUser, JwtPayload } from '@/common/decorators';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -32,14 +34,20 @@ export class UsersController {
   @Get()
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'List all users (manager only)' })
-  findAll(@Query('role') role?: Role, @Query('search') search?: string) {
-    return this.usersService.findAll(role, search);
+  findAll(@Query() query: UserQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   getMe(@CurrentUser() user: JwtPayload) {
     return this.usersService.findOne(user.sub);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Update current user profile' })
+  updateMe(@Body() dto: UpdateProfileDto, @CurrentUser() user: JwtPayload) {
+    return this.usersService.updateProfile(user.sub, dto);
   }
 
   @Get(':id')
@@ -52,10 +60,7 @@ export class UsersController {
   @Patch(':id')
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'Update user (manager only)' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateUserDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
   }
 

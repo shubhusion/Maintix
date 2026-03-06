@@ -24,12 +24,7 @@ export class NotificationsService {
     });
   }
 
-  async findAllForUser(
-    userId: string,
-    cursor?: string,
-    limit = 20,
-    unreadOnly = false,
-  ) {
+  async findAllForUser(userId: string, cursor?: string, limit = 20, unreadOnly = false) {
     const where: Record<string, unknown> = { userId };
     if (unreadOnly) where.isRead = false;
     if (cursor) where.createdAt = { lt: new Date(cursor) };
@@ -47,9 +42,7 @@ export class NotificationsService {
       data,
       meta: {
         hasMore,
-        nextCursor: hasMore
-          ? data[data.length - 1].createdAt.toISOString()
-          : null,
+        nextCursor: hasMore ? data[data.length - 1].createdAt.toISOString() : null,
       },
     };
   }

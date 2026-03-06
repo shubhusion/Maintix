@@ -61,11 +61,7 @@ export function FeaturesSection() {
                   </div>
                 ))}
               </div>
-              <ShineBorder
-                shineColor={['#6366f1', '#34d399']}
-                borderWidth={1}
-                duration={10}
-              />
+              <ShineBorder shineColor={['#6366f1', '#34d399']} borderWidth={1} duration={10} />
             </BentoCard>
           </BlurFade>
 

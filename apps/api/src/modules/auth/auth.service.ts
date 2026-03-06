@@ -5,6 +5,7 @@ import { PrismaService } from '@/common/database/prisma.service';
 import { BusinessException } from '@/common/exceptions/business.exception';
 import { ErrorCode } from '@maintix/shared-types';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -59,5 +60,32 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId, deletedAt: null },
+    });
+
+    if (!user) {
+      throw new BusinessException('User not found', ErrorCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+    }
+
+    const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new BusinessException(
+        'Current password is incorrect',
+        ErrorCode.WRONG_PASSWORD,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const newHash = await bcrypt.hash(dto.newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash },
+    });
+
+    return { message: 'Password changed successfully' };
   }
 }

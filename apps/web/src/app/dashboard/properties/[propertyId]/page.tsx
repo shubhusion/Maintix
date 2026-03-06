@@ -3,16 +3,14 @@
 import { use, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Building2,
-  Tag,
-  Ticket,
-  Plus,
-  Trash2,
-  UserPlus,
-} from 'lucide-react';
+import { Building2, Tag, Ticket, Plus, Trash2, UserPlus } from 'lucide-react';
 import Link from 'next/link';
-import { useProperty, usePropertyMembers, useAddMember, useRemoveMember } from '@/hooks/use-properties';
+import {
+  useProperty,
+  usePropertyMembers,
+  useAddMember,
+  useRemoveMember,
+} from '@/hooks/use-properties';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useTickets } from '@/hooks/use-tickets';
 import { useUsers } from '@/hooks/use-users';
@@ -23,8 +21,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { statusConfig, priorityConfig } from '@/lib/ticket-config';
@@ -50,6 +71,7 @@ export default function PropertyDetailPage({
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [removeMemberTarget, setRemoveMemberTarget] = useState<string | null>(null);
 
   const isManager = user?.role === Role.MANAGER;
 
@@ -169,11 +191,7 @@ export default function PropertyDetailPage({
               <CardDescription>People in this property</CardDescription>
             </div>
             {isManager && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setMemberDialogOpen(true)}
-              >
+              <Button size="sm" variant="outline" onClick={() => setMemberDialogOpen(true)}>
                 <UserPlus className="mr-1 h-4 w-4" />
                 Add
               </Button>
@@ -183,10 +201,7 @@ export default function PropertyDetailPage({
             {members && members.length > 0 ? (
               <ul className="space-y-3">
                 {members.map((m) => (
-                  <li
-                    key={m.userId}
-                    className="flex items-center justify-between"
-                  >
+                  <li key={m.userId} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                         {m.user.firstName[0]}
@@ -206,7 +221,7 @@ export default function PropertyDetailPage({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-error-500"
-                        onClick={() => onRemoveMember(m.userId)}
+                        onClick={() => setRemoveMemberTarget(m.userId)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -225,16 +240,10 @@ export default function PropertyDetailPage({
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base">Categories</CardTitle>
-              <CardDescription>
-                Ticket categories for this property
-              </CardDescription>
+              <CardDescription>Ticket categories for this property</CardDescription>
             </div>
             {isManager && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setCatDialogOpen(true)}
-              >
+              <Button size="sm" variant="outline" onClick={() => setCatDialogOpen(true)}>
                 <Plus className="mr-1 h-4 w-4" />
                 Add
               </Button>
@@ -251,9 +260,7 @@ export default function PropertyDetailPage({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                No categories yet.
-              </p>
+              <p className="text-sm text-muted-foreground">No categories yet.</p>
             )}
           </CardContent>
         </Card>
@@ -282,9 +289,7 @@ export default function PropertyDetailPage({
                   className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:border-primary/50"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">
-                      {ticket.title}
-                    </p>
+                    <p className="text-sm font-medium truncate">{ticket.title}</p>
                     <p className="text-xs text-muted-foreground">
                       {ticket.category?.name} · by {ticket.createdBy?.firstName}
                     </p>
@@ -313,9 +318,7 @@ export default function PropertyDetailPage({
           ) : (
             <div className="flex flex-col items-center justify-center py-8">
               <Ticket className="mb-3 h-10 w-10 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                No tickets yet for this property.
-              </p>
+              <p className="text-sm text-muted-foreground">No tickets yet for this property.</p>
             </div>
           )}
         </CardContent>
@@ -326,7 +329,9 @@ export default function PropertyDetailPage({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Member</DialogTitle>
-            <DialogDescription>Select a user to add as a member of this property.</DialogDescription>
+            <DialogDescription>
+              Select a user to add as a member of this property.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
@@ -362,22 +367,14 @@ export default function PropertyDetailPage({
           </DialogHeader>
           <form onSubmit={handleSubmit(onCreateCategory)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="catName">Name <span className="text-error-500">*</span></Label>
-              <Input
-                id="catName"
-                placeholder="e.g. Plumbing"
-                {...register('name')}
-              />
-              {errors.name && (
-                <p className="text-sm text-error-500">{errors.name.message}</p>
-              )}
+              <Label htmlFor="catName">
+                Name <span className="text-error-500">*</span>
+              </Label>
+              <Input id="catName" placeholder="e.g. Plumbing" {...register('name')} />
+              {errors.name && <p className="text-sm text-error-500">{errors.name.message}</p>}
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCatDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setCatDialogOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -387,6 +384,38 @@ export default function PropertyDetailPage({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Remove Member Confirmation */}
+      <AlertDialog
+        open={!!removeMemberTarget}
+        onOpenChange={(open) => {
+          if (!open) setRemoveMemberTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the user from this property. They will lose access to all tickets and
+              data associated with it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (removeMemberTarget) {
+                  onRemoveMember(removeMemberTarget);
+                  setRemoveMemberTarget(null);
+                }
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -9,7 +9,11 @@ import { PRICING_TIERS } from './constants';
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-24 md:py-32 border-y border-border/50 bg-muted/30" aria-label="Pricing">
+    <section
+      id="pricing"
+      className="py-24 md:py-32 border-y border-border/50 bg-muted/30"
+      aria-label="Pricing"
+    >
       <div className="mx-auto max-w-5xl px-6">
         <BlurFade>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-500 mb-3 text-center">
@@ -39,11 +43,7 @@ export function PricingSection() {
                 )}
               >
                 {tier.highlighted && (
-                  <ShineBorder
-                    shineColor={['#6366f1', '#34d399']}
-                    borderWidth={1}
-                    duration={12}
-                  />
+                  <ShineBorder shineColor={['#6366f1', '#34d399']} borderWidth={1} duration={12} />
                 )}
                 {tier.highlighted && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 px-3 py-0.5 text-[10px] font-semibold text-white uppercase tracking-wider">
@@ -64,10 +64,7 @@ export function PricingSection() {
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {tier.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-center gap-2.5 text-sm text-muted-foreground"
-                    >
+                    <li key={f} className="flex items-center gap-2.5 text-sm text-muted-foreground">
                       <Check className="h-4 w-4 shrink-0 text-primary-500" />
                       {f}
                     </li>

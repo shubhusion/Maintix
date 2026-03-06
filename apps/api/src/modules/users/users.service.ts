@@ -5,6 +5,8 @@ import { BusinessException } from '@/common/exceptions/business.exception';
 import { Role, ErrorCode } from '@maintix/shared-types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserQueryDto } from './dto/user-query.dto';
 
 @Injectable()
 export class UsersService {
@@ -57,20 +59,25 @@ export class UsersService {
     return user;
   }
 
-  async findAll(role?: Role, search?: string) {
+  async findAll(query: UserQueryDto) {
     const where: Record<string, unknown> = { deletedAt: null };
-    if (role) {
-      where.role = role;
+    if (query.role) {
+      where.role = query.role;
     }
-    if (search) {
+    if (query.search) {
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: query.search, mode: 'insensitive' } },
+        { lastName: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: query.search, mode: 'insensitive' } },
       ];
     }
+    if (query.cursor) {
+      where.createdAt = { lt: new Date(query.cursor) };
+    }
 
-    return this.prisma.user.findMany({
+    const limit = query.limit || 20;
+
+    const users = await this.prisma.user.findMany({
       where,
       select: {
         id: true,
@@ -82,7 +89,19 @@ export class UsersService {
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
+      take: limit + 1,
     });
+
+    const hasMore = users.length > limit;
+    const data = hasMore ? users.slice(0, limit) : users;
+
+    return {
+      data,
+      meta: {
+        hasMore,
+        nextCursor: hasMore ? data[data.length - 1].createdAt.toISOString() : null,
+      },
+    };
   }
 
   async findOne(id: string) {
@@ -101,11 +120,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new BusinessException(
-        'User not found',
-        ErrorCode.USER_NOT_FOUND,
-        HttpStatus.NOT_FOUND,
-      );
+      throw new BusinessException('User not found', ErrorCode.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 
     return user;
@@ -120,6 +135,27 @@ export class UsersService {
         ...(dto.firstName && { firstName: dto.firstName }),
         ...(dto.lastName && { lastName: dto.lastName }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    await this.findOne(userId);
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(dto.firstName && { firstName: dto.firstName }),
+        ...(dto.lastName && { lastName: dto.lastName }),
       },
       select: {
         id: true,

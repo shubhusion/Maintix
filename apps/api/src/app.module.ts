@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
 import * as Joi from 'joi';
 import * as path from 'path';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { DatabaseModule } from './common/database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -23,7 +24,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
-        path.resolve(__dirname, '..', '.env'),        // apps/api/.env
+        path.resolve(__dirname, '..', '.env'), // apps/api/.env
         path.resolve(__dirname, '..', '..', '..', '.env'), // root .env
       ],
       validationSchema: Joi.object({
@@ -80,4 +81,8 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

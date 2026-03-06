@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.github
+*.md
+docker-compose.yml
+.env*
+.turbo
+docs
+.vscode

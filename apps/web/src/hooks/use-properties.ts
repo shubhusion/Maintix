@@ -31,8 +31,7 @@ export function useProperty(id: string) {
 export function usePropertyMembers(propertyId: string) {
   return useQuery({
     queryKey: ['properties', propertyId, 'members'],
-    queryFn: () =>
-      api.get<PropertyMember[]>(`/properties/${propertyId}/members`),
+    queryFn: () => api.get<PropertyMember[]>(`/properties/${propertyId}/members`),
     enabled: !!propertyId,
   });
 }
@@ -62,8 +61,7 @@ export function useUpdateProperty(id: string) {
 export function useAddMember(propertyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { userId: string }) =>
-      api.post(`/properties/${propertyId}/members`, data),
+    mutationFn: (data: { userId: string }) => api.post(`/properties/${propertyId}/members`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['properties', propertyId, 'members'],
@@ -75,8 +73,7 @@ export function useAddMember(propertyId: string) {
 export function useRemoveMember(propertyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (userId: string) =>
-      api.delete(`/properties/${propertyId}/members/${userId}`),
+    mutationFn: (userId: string) => api.delete(`/properties/${propertyId}/members/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['properties', propertyId, 'members'],

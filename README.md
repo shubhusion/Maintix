@@ -17,14 +17,14 @@ Maintix streamlines maintenance ticket workflows across multiple properties. Ten
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
+| Layer        | Technology                                             |
+| ------------ | ------------------------------------------------------ |
 | **Frontend** | Next.js 15, React 19, Tailwind CSS 4, TanStack Query 5 |
-| **Backend** | NestJS 10, Passport JWT, Prisma 6 |
-| **Database** | PostgreSQL 16 |
-| **Storage** | Supabase Storage |
-| **Monorepo** | pnpm Workspaces + Turborepo |
-| **UI** | Radix UI, shadcn/ui, Magic UI, Framer Motion |
+| **Backend**  | NestJS 10, Passport JWT, Prisma 6                      |
+| **Database** | PostgreSQL 16                                          |
+| **Storage**  | Supabase Storage                                       |
+| **Monorepo** | pnpm Workspaces + Turborepo                            |
+| **UI**       | Radix UI, shadcn/ui, Magic UI, Framer Motion           |
 
 ## Quick Start
 
@@ -53,17 +53,18 @@ pnpm dev
 ```
 
 Open:
+
 - **Frontend** → http://localhost:3000
 - **API** → http://localhost:3001/api/v1
 - **Swagger** → http://localhost:3001/api/docs
 
 ### Default Seed Credentials
 
-| Email | Password | Role |
-|-------|----------|------|
-| `admin@Maintix.com` | `ChangeThisPassword123` | Manager |
-| `tenant@Maintix.com` | `TenantPass123` | Tenant |
-| `tech@Maintix.com` | `TechPass123` | Technician |
+| Email                | Password                | Role       |
+| -------------------- | ----------------------- | ---------- |
+| `admin@Maintix.com`  | `ChangeThisPassword123` | Manager    |
+| `tenant@Maintix.com` | `TenantPass123`         | Tenant     |
+| `tech@Maintix.com`   | `TechPass123`           | Technician |
 
 The seed also creates a **Sunrise Apartments** property with all three users as members and four default categories (Plumbing, Electrical, HVAC, General Maintenance).
 
@@ -87,18 +88,18 @@ Maintix/
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start all apps in development mode |
-| `pnpm build` | Build all packages and apps |
-| `pnpm lint` | Lint all packages |
-| `pnpm test` | Run all tests |
-| `pnpm db:generate` | Generate Prisma client |
-| `pnpm db:migrate` | Run database migrations |
-| `pnpm db:push` | Push schema changes (dev) |
-| `pnpm db:seed` | Seed database with initial data |
-| `pnpm db:studio` | Open Prisma Studio GUI |
-| `pnpm format` | Format code with Prettier |
+| Command            | Description                        |
+| ------------------ | ---------------------------------- |
+| `pnpm dev`         | Start all apps in development mode |
+| `pnpm build`       | Build all packages and apps        |
+| `pnpm lint`        | Lint all packages                  |
+| `pnpm test`        | Run all tests                      |
+| `pnpm db:generate` | Generate Prisma client             |
+| `pnpm db:migrate`  | Run database migrations            |
+| `pnpm db:push`     | Push schema changes (dev)          |
+| `pnpm db:seed`     | Seed database with initial data    |
+| `pnpm db:studio`   | Open Prisma Studio GUI             |
+| `pnpm format`      | Format code with Prettier          |
 
 ## Documentation
 

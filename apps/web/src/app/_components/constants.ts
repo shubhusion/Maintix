@@ -1,11 +1,4 @@
-import {
-  Shield,
-  Zap,
-  Users,
-  Building2,
-  Bell,
-  ClipboardList,
-} from 'lucide-react';
+import { Shield, Zap, Users, Building2, Bell, ClipboardList } from 'lucide-react';
 
 export const NAV_LINKS = [
   { label: 'Features', href: '#features' },
@@ -30,7 +23,14 @@ export const NOTIFICATIONS = [
   { text: 'Maintenance scheduled — Bldg B', time: '22m ago', icon: '📅' },
 ];
 
-export const WORKFLOW_STAGES = ['Open', 'Assigned', 'In Progress', 'Completed', 'Approved', 'Closed'];
+export const WORKFLOW_STAGES = [
+  'Open',
+  'Assigned',
+  'In Progress',
+  'Completed',
+  'Approved',
+  'Closed',
+];
 
 export const PRICING_TIERS = [
   {
@@ -38,12 +38,7 @@ export const PRICING_TIERS = [
     price: '$0',
     period: '/month',
     description: 'For small teams getting started',
-    features: [
-      'Up to 2 properties',
-      'Up to 10 users',
-      'Basic notifications',
-      'Community support',
-    ],
+    features: ['Up to 2 properties', 'Up to 10 users', 'Basic notifications', 'Community support'],
     cta: 'Get Started',
     href: '/login',
     highlighted: false,
@@ -53,12 +48,7 @@ export const PRICING_TIERS = [
     price: '$29',
     period: '/month',
     description: 'For growing property managers',
-    features: [
-      'Unlimited properties',
-      'Unlimited users',
-      'Priority support',
-      'Advanced analytics',
-    ],
+    features: ['Unlimited properties', 'Unlimited users', 'Priority support', 'Advanced analytics'],
     cta: 'Start Free Trial',
     href: '/login',
     highlighted: true,
@@ -68,12 +58,7 @@ export const PRICING_TIERS = [
     price: 'Custom',
     period: '',
     description: 'For large-scale operations',
-    features: [
-      'Everything in Pro',
-      'Dedicated support',
-      'Custom integrations',
-      'SLA guarantee',
-    ],
+    features: ['Everything in Pro', 'Dedicated support', 'Custom integrations', 'SLA guarantee'],
     cta: 'Contact Sales',
     href: '#',
     highlighted: false,

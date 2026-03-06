@@ -1,12 +1,5 @@
 import { TicketStatus, Priority } from '@maintix/shared-types';
-import {
-  Clock,
-  UserCheck,
-  Play,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
+import { Clock, UserCheck, Play, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
 export type BadgeVariant =
   | 'default'
@@ -48,10 +41,7 @@ export const statusConfig: Record<
   },
 };
 
-export const priorityConfig: Record<
-  string,
-  { label: string; color: string }
-> = {
+export const priorityConfig: Record<string, { label: string; color: string }> = {
   [Priority.LOW]: { label: 'Low', color: 'text-neutral-500' },
   [Priority.MEDIUM]: { label: 'Medium', color: 'text-primary-500' },
   [Priority.HIGH]: { label: 'High', color: 'text-warning-500' },

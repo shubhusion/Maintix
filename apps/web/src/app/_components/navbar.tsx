@@ -57,7 +57,8 @@ export function Navbar({
         <div className="flex items-center gap-1.5">
           <ThemeToggle
             className={cn(
-              !scrolled && 'dark:border-white/15 dark:bg-white/[0.06] dark:text-white dark:hover:bg-white/[0.12]',
+              !scrolled &&
+                'dark:border-white/15 dark:bg-white/[0.06] dark:text-white dark:hover:bg-white/[0.12]',
             )}
           />
           <Link

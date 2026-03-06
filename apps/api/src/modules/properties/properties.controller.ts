@@ -26,10 +26,7 @@ export class PropertiesController {
   @Post()
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'Create a property (manager only)' })
-  create(
-    @Body() dto: CreatePropertyDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
+  create(@Body() dto: CreatePropertyDto, @CurrentUser() user: JwtPayload) {
     return this.propertiesService.create(dto, user.sub);
   }
 
@@ -50,10 +47,7 @@ export class PropertiesController {
   @Roles(Role.MANAGER)
   @UseGuards(PropertyGuard)
   @ApiOperation({ summary: 'Update property (manager only)' })
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdatePropertyDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePropertyDto) {
     return this.propertiesService.update(id, dto);
   }
 

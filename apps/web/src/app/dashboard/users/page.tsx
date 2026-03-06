@@ -34,11 +34,12 @@ import type { z } from 'zod';
 
 type CreateUserValues = z.infer<typeof createUserSchema>;
 
-const roleConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
-  [Role.MANAGER]: { label: 'Manager', variant: 'default' },
-  [Role.TECHNICIAN]: { label: 'Technician', variant: 'secondary' },
-  [Role.TENANT]: { label: 'Tenant', variant: 'outline' },
-};
+const roleConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> =
+  {
+    [Role.MANAGER]: { label: 'Manager', variant: 'default' },
+    [Role.TECHNICIAN]: { label: 'Technician', variant: 'secondary' },
+    [Role.TENANT]: { label: 'Tenant', variant: 'outline' },
+  };
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -110,7 +111,7 @@ export default function UsersPage() {
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
-      ) : !users?.length ? (
+      ) : !users?.data?.length ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <UsersIcon className="mb-4 h-12 w-12 text-muted-foreground/30" />
@@ -126,7 +127,7 @@ export default function UsersPage() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {users.map((u: User) => {
+          {users.data.map((u: User) => {
             const rc = roleConfig[u.role] ?? { label: u.role, variant: 'outline' as const };
             return (
               <Card key={u.id}>
@@ -160,14 +161,12 @@ export default function UsersPage() {
             <DialogDescription>Add a new tenant, technician, or manager.</DialogDescription>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="firstName">First Name <span className="text-error-500">*</span></Label>
-                <Input
-                  id="firstName"
-                  {...form.register('firstName')}
-                  placeholder="John"
-                />
+                <Label htmlFor="firstName">
+                  First Name <span className="text-error-500">*</span>
+                </Label>
+                <Input id="firstName" {...form.register('firstName')} placeholder="John" />
                 {form.formState.errors.firstName && (
                   <p className="text-xs text-error-500">
                     {form.formState.errors.firstName.message}
@@ -175,21 +174,19 @@ export default function UsersPage() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName">Last Name <span className="text-error-500">*</span></Label>
-                <Input
-                  id="lastName"
-                  {...form.register('lastName')}
-                  placeholder="Doe"
-                />
+                <Label htmlFor="lastName">
+                  Last Name <span className="text-error-500">*</span>
+                </Label>
+                <Input id="lastName" {...form.register('lastName')} placeholder="Doe" />
                 {form.formState.errors.lastName && (
-                  <p className="text-xs text-error-500">
-                    {form.formState.errors.lastName.message}
-                  </p>
+                  <p className="text-xs text-error-500">{form.formState.errors.lastName.message}</p>
                 )}
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email <span className="text-error-500">*</span></Label>
+              <Label htmlFor="email">
+                Email <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -197,13 +194,13 @@ export default function UsersPage() {
                 placeholder="john@example.com"
               />
               {form.formState.errors.email && (
-                <p className="text-xs text-error-500">
-                  {form.formState.errors.email.message}
-                </p>
+                <p className="text-xs text-error-500">{form.formState.errors.email.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password <span className="text-error-500">*</span></Label>
+              <Label htmlFor="password">
+                Password <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -211,13 +208,13 @@ export default function UsersPage() {
                 placeholder="••••••••"
               />
               {form.formState.errors.password && (
-                <p className="text-xs text-error-500">
-                  {form.formState.errors.password.message}
-                </p>
+                <p className="text-xs text-error-500">{form.formState.errors.password.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Role <span className="text-error-500">*</span></Label>
+              <Label>
+                Role <span className="text-error-500">*</span>
+              </Label>
               <Select
                 value={form.watch('role')}
                 onValueChange={(v) => form.setValue('role', v as Role.TENANT | Role.TECHNICIAN)}

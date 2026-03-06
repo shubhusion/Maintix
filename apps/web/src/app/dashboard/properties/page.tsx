@@ -5,10 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Building2 } from 'lucide-react';
 import Link from 'next/link';
-import {
-  useProperties,
-  useCreateProperty,
-} from '@/hooks/use-properties';
+import { useProperties, useCreateProperty } from '@/hooks/use-properties';
 import { useAuth } from '@/contexts/auth-context';
 import { createPropertySchema, type CreatePropertyFormData } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
@@ -64,9 +61,7 @@ export default function PropertiesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
-          <p className="text-muted-foreground">
-            Manage your buildings and units.
-          </p>
+          <p className="text-muted-foreground">Manage your buildings and units.</p>
         </div>
         {isManager && (
           <Button onClick={() => setDialogOpen(true)}>
@@ -85,18 +80,13 @@ export default function PropertiesPage() {
       ) : properties && properties.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => (
-            <Link
-              key={property.id}
-              href={`/dashboard/properties/${property.id}`}
-            >
+            <Link key={property.id} href={`/dashboard/properties/${property.id}`}>
               <Card className="cursor-pointer transition-colors hover:border-primary/50">
                 <CardHeader>
                   <CardTitle className="text-base">{property.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {property.address}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{property.address}</p>
                 </CardContent>
               </Card>
             </Link>
@@ -124,35 +114,21 @@ export default function PropertiesPage() {
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name <span className="text-error-500">*</span></Label>
-              <Input
-                id="name"
-                placeholder="Sunrise Apartments"
-                {...register('name')}
-              />
-              {errors.name && (
-                <p className="text-sm text-error-500">{errors.name.message}</p>
-              )}
+              <Label htmlFor="name">
+                Name <span className="text-error-500">*</span>
+              </Label>
+              <Input id="name" placeholder="Sunrise Apartments" {...register('name')} />
+              {errors.name && <p className="text-sm text-error-500">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="address">Address <span className="text-error-500">*</span></Label>
-              <Input
-                id="address"
-                placeholder="123 Main St, City, State"
-                {...register('address')}
-              />
-              {errors.address && (
-                <p className="text-sm text-error-500">
-                  {errors.address.message}
-                </p>
-              )}
+              <Label htmlFor="address">
+                Address <span className="text-error-500">*</span>
+              </Label>
+              <Input id="address" placeholder="123 Main St, City, State" {...register('address')} />
+              {errors.address && <p className="text-sm text-error-500">{errors.address.message}</p>}
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

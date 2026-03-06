@@ -49,10 +49,7 @@ export class TicketsController {
   @Get('properties/:propertyId/tickets')
   @UseGuards(PropertyGuard)
   @ApiOperation({ summary: 'List tickets for a property' })
-  findAll(
-    @Param('propertyId', ParseUUIDPipe) propertyId: string,
-    @Query() query: TicketQueryDto,
-  ) {
+  findAll(@Param('propertyId', ParseUUIDPipe) propertyId: string, @Query() query: TicketQueryDto) {
     return this.ticketsService.findAllByProperty(propertyId, query);
   }
 
@@ -60,8 +57,8 @@ export class TicketsController {
 
   @Get('tickets/:id')
   @ApiOperation({ summary: 'Get ticket details' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.ticketsService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: JwtPayload) {
+    return this.ticketsService.findOne(id, user.sub);
   }
 
   @Patch('tickets/:id/assign')

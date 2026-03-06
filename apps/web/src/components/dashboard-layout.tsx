@@ -12,6 +12,9 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -19,6 +22,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useUnreadCount } from '@/hooks/use-notifications';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { CommandPalette } from '@/components/command-palette';
 import { Role } from '@maintix/shared-types';
 
 const navigation = [
@@ -45,6 +49,7 @@ const navigation = [
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -79,17 +84,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   const filteredNav = navigation.filter(
-    (item) =>
-      item.roles === 'all' ||
-      (user && item.roles.includes(user.role as Role)),
+    (item) => item.roles === 'all' || (user && item.roles.includes(user.role as Role)),
   );
 
   // Generate breadcrumbs from pathname
   const breadcrumbs = generateBreadcrumbs(pathname);
-  const pageTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard';
+  const pageTitle =
+    breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard';
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <CommandPalette />
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -106,18 +111,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         aria-modal={sidebarOpen ? true : undefined}
         aria-label="Main navigation"
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card transition-transform lg:static lg:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          'fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-card transition-all duration-200 lg:static lg:translate-x-0',
+          sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64',
+          !sidebarOpen && (collapsed ? 'lg:w-16' : 'lg:w-64'),
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center gap-2 border-b px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
+        <div
+          className={cn(
+            'flex h-16 items-center gap-2 border-b',
+            collapsed ? 'px-3 justify-center lg:px-3' : 'px-6',
+          )}
+        >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
             M
           </div>
-          <span className="text-lg font-semibold">Maintix</span>
+          {!collapsed && <span className="text-lg font-semibold">Maintix</span>}
           <button
-            className="ml-auto lg:hidden"
+            className={cn('lg:hidden', collapsed ? '' : 'ml-auto')}
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           >
@@ -137,45 +148,82 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
                 aria-current={isActive ? 'page' : undefined}
+                title={collapsed ? item.name : undefined}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  collapsed && 'lg:justify-center lg:px-0',
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.name}
+                <item.icon className="h-5 w-5 shrink-0" />
+                {!collapsed && item.name}
               </Link>
             );
           })}
         </nav>
 
+        {/* Collapse toggle (desktop only) */}
+        <div className="hidden lg:flex border-t p-2 justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="h-8 w-8"
+          >
+            {collapsed ? (
+              <ChevronsRight className="h-4 w-4" />
+            ) : (
+              <ChevronsLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
         {/* User info */}
         <div className="border-t p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
-              {user?.firstName?.[0]}
-              {user?.lastName?.[0]}
+          {collapsed ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+                {user?.firstName?.[0]}
+                {user?.lastName?.[0]}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="shrink-0"
+                aria-label="Log out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {user?.role.toLowerCase()}
-              </p>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+                {user?.firstName?.[0]}
+                {user?.lastName?.[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {user?.role.toLowerCase()}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="shrink-0"
+                aria-label="Log out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="shrink-0"
-              aria-label="Log out"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
         </div>
       </aside>
 
@@ -203,10 +251,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         {crumb.label}
                       </span>
                     ) : (
-                      <Link
-                        href={crumb.href}
-                        className="hover:text-foreground transition-colors"
-                      >
+                      <Link href={crumb.href} className="hover:text-foreground transition-colors">
                         {crumb.label}
                       </Link>
                     )}
@@ -221,15 +266,36 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
+          {/* Command Palette Trigger */}
+          <button
+            onClick={() =>
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
+            }
+            className="hidden sm:flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span>Search...</span>
+            <kbd className="ml-2 rounded border bg-background px-1.5 py-0.5 font-mono text-[10px]">
+              ⌘K
+            </kbd>
+          </button>
+
           {/* Theme toggle */}
           <ThemeToggle />
 
           {/* Notifications */}
           <Link href="/dashboard/notifications" className="relative">
-            <Button variant="ghost" size="icon" aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+            >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground" aria-hidden="true">
+                <span
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+                  aria-hidden="true"
+                >
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}

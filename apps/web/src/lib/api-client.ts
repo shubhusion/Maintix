@@ -18,10 +18,7 @@ function getToken(): string | null {
   return localStorage.getItem('accessToken');
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestInit = {},
-): Promise<T> {
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
@@ -54,11 +51,7 @@ async function request<T>(
       window.dispatchEvent(new CustomEvent('auth:session-expired'));
     }
 
-    throw new ApiError(
-      error.statusCode,
-      error.errorCode,
-      error.message,
-    );
+    throw new ApiError(error.statusCode, error.errorCode, error.message);
   }
 
   // Handle 204 No Content
@@ -85,8 +78,7 @@ export const api = {
       body: data ? JSON.stringify(data) : undefined,
     }),
 
-  delete: <T>(endpoint: string) =>
-    request<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
 
   upload: <T>(endpoint: string, formData: FormData) =>
     request<T>(endpoint, {

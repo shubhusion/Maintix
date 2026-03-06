@@ -22,6 +22,7 @@ import {
   useUnreadCount,
   type Notification,
 } from '@/hooks/use-notifications';
+import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,15 +36,42 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { NotificationType } from '@maintix/shared-types';
 
-const notificationTypeConfig: Record<string, { icon: React.ElementType; color: string; label: string }> = {
+const notificationTypeConfig: Record<
+  string,
+  { icon: React.ElementType; color: string; label: string }
+> = {
   [NotificationType.TICKET_CREATED]: { icon: Ticket, color: 'text-primary', label: 'Created' },
-  [NotificationType.TICKET_ASSIGNED]: { icon: UserCheck, color: 'text-accent-500', label: 'Assigned' },
+  [NotificationType.TICKET_ASSIGNED]: {
+    icon: UserCheck,
+    color: 'text-accent-500',
+    label: 'Assigned',
+  },
   [NotificationType.WORK_STARTED]: { icon: Play, color: 'text-warning-500', label: 'Work Started' },
-  [NotificationType.COMPLETION_SUBMITTED]: { icon: CheckCircle, color: 'text-accent-500', label: 'Completed' },
-  [NotificationType.TICKET_APPROVED]: { icon: CheckCircle, color: 'text-success-600', label: 'Approved' },
-  [NotificationType.TICKET_CANCELLED]: { icon: XCircle, color: 'text-error-500', label: 'Cancelled' },
-  [NotificationType.PRIORITY_CHANGED]: { icon: AlertTriangle, color: 'text-warning-600', label: 'Priority Changed' },
-  [NotificationType.TECHNICIAN_REASSIGNED]: { icon: RotateCcw, color: 'text-primary', label: 'Reassigned' },
+  [NotificationType.COMPLETION_SUBMITTED]: {
+    icon: CheckCircle,
+    color: 'text-accent-500',
+    label: 'Completed',
+  },
+  [NotificationType.TICKET_APPROVED]: {
+    icon: CheckCircle,
+    color: 'text-success-600',
+    label: 'Approved',
+  },
+  [NotificationType.TICKET_CANCELLED]: {
+    icon: XCircle,
+    color: 'text-error-500',
+    label: 'Cancelled',
+  },
+  [NotificationType.PRIORITY_CHANGED]: {
+    icon: AlertTriangle,
+    color: 'text-warning-600',
+    label: 'Priority Changed',
+  },
+  [NotificationType.TECHNICIAN_REASSIGNED]: {
+    icon: RotateCcw,
+    color: 'text-primary',
+    label: 'Reassigned',
+  },
 };
 
 export default function NotificationsPage() {
@@ -57,9 +85,10 @@ export default function NotificationsPage() {
   const notifications = notificationsData?.data ?? [];
   const unreadCount = unreadData?.count ?? 0;
 
-  const filteredNotifications = typeFilter === 'all'
-    ? notifications
-    : notifications.filter((n: Notification) => n.type === typeFilter);
+  const filteredNotifications =
+    typeFilter === 'all'
+      ? notifications
+      : notifications.filter((n: Notification) => n.type === typeFilter);
 
   const handleMarkAllRead = async () => {
     try {
@@ -90,7 +119,7 @@ export default function NotificationsPage() {
       {/* Type filter */}
       <div className="flex items-center gap-3">
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
           <SelectContent>
@@ -139,11 +168,9 @@ export default function NotificationsPage() {
                     <Icon className={`h-4 w-4 ${n.isRead ? 'opacity-40' : ''} ${iconColor}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${!n.isRead ? 'font-medium' : ''}`}>
-                      {n.message}
-                    </p>
+                    <p className={`text-sm ${!n.isRead ? 'font-medium' : ''}`}>{n.message}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(n.createdAt).toLocaleString()}
+                      {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                     </p>
                   </div>
                   {!n.isRead && (

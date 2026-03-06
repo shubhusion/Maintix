@@ -18,13 +18,13 @@ git checkout -b fix/your-bug-fix
 
 **Branch naming conventions**:
 
-| Prefix | Use Case |
-|--------|----------|
-| `feature/` | New features |
-| `fix/` | Bug fixes |
-| `refactor/` | Code restructuring |
-| `docs/` | Documentation updates |
-| `chore/` | Build, deps, config changes |
+| Prefix      | Use Case                    |
+| ----------- | --------------------------- |
+| `feature/`  | New features                |
+| `fix/`      | Bug fixes                   |
+| `refactor/` | Code restructuring          |
+| `docs/`     | Documentation updates       |
+| `chore/`    | Build, deps, config changes |
 
 ### 3. Make Changes
 
@@ -63,26 +63,26 @@ pnpm build
 
 ### API (NestJS)
 
-| Guideline | Details |
-|-----------|---------|
-| **Module structure** | One folder per feature module in `src/modules/` |
-| **Controllers** | Thin — delegate logic to services |
-| **Services** | Business logic lives here |
-| **DTOs** | Always validate input with `class-validator` decorators |
-| **Guards** | Use `@Public()` for unauthenticated routes, `@Roles()` for authorization |
-| **Error handling** | Use `BusinessException` with typed `ErrorCode` |
-| **Database** | Use `PrismaService` — never instantiate `PrismaClient` directly |
+| Guideline            | Details                                                                  |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Module structure** | One folder per feature module in `src/modules/`                          |
+| **Controllers**      | Thin — delegate logic to services                                        |
+| **Services**         | Business logic lives here                                                |
+| **DTOs**             | Always validate input with `class-validator` decorators                  |
+| **Guards**           | Use `@Public()` for unauthenticated routes, `@Roles()` for authorization |
+| **Error handling**   | Use `BusinessException` with typed `ErrorCode`                           |
+| **Database**         | Use `PrismaService` — never instantiate `PrismaClient` directly          |
 
 ### Frontend (Next.js)
 
-| Guideline | Details |
-|-----------|---------|
-| **Components** | Use `'use client'` directive for interactive components |
-| **Data fetching** | Always use TanStack Query hooks (in `src/hooks/`) |
-| **Forms** | react-hook-form + Zod schemas (in `src/lib/validations.ts`) |
-| **Styling** | Tailwind CSS utility classes, use `cn()` for conditional classes |
-| **Theme** | All custom colors must support `dark:` variant |
-| **API calls** | Use the `api` client from `src/lib/api-client.ts` |
+| Guideline         | Details                                                          |
+| ----------------- | ---------------------------------------------------------------- |
+| **Components**    | Use `'use client'` directive for interactive components          |
+| **Data fetching** | Always use TanStack Query hooks (in `src/hooks/`)                |
+| **Forms**         | react-hook-form + Zod schemas (in `src/lib/validations.ts`)      |
+| **Styling**       | Tailwind CSS utility classes, use `cn()` for conditional classes |
+| **Theme**         | All custom colors must support `dark:` variant                   |
+| **API calls**     | Use the `api` client from `src/lib/api-client.ts`                |
 
 ### Formatting
 

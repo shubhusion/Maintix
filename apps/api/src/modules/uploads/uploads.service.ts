@@ -4,7 +4,13 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '@/common/database/prisma.service';
 import { BusinessException } from '@/common/exceptions/business.exception';
-import { ErrorCode, STORAGE_BUCKET, MAX_UPLOAD_SIZE, ALLOWED_FILE_TYPES, MAX_ATTACHMENTS_PER_TICKET } from '@maintix/shared-types';
+import {
+  ErrorCode,
+  STORAGE_BUCKET,
+  MAX_UPLOAD_SIZE,
+  ALLOWED_FILE_TYPES,
+  MAX_ATTACHMENTS_PER_TICKET,
+} from '@maintix/shared-types';
 
 @Injectable()
 export class UploadsService {
@@ -91,9 +97,7 @@ export class UploadsService {
     }
 
     // Get public URL
-    const { data: urlData } = this.supabase.storage
-      .from(STORAGE_BUCKET)
-      .getPublicUrl(storagePath);
+    const { data: urlData } = this.supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath);
 
     // Create attachment record
     const attachment = await this.prisma.ticketAttachment.create({
@@ -113,6 +117,7 @@ export class UploadsService {
   async deleteAttachment(attachmentId: string, userId: string) {
     const attachment = await this.prisma.ticketAttachment.findUnique({
       where: { id: attachmentId },
+      include: { ticket: { select: { propertyId: true } } },
     });
 
     if (!attachment) {
@@ -120,6 +125,19 @@ export class UploadsService {
         'Attachment not found',
         ErrorCode.ATTACHMENT_NOT_FOUND,
         HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Validate property membership
+    const membership = await this.prisma.propertyMember.findUnique({
+      where: { propertyId_userId: { propertyId: attachment.ticket.propertyId, userId } },
+    });
+
+    if (!membership) {
+      throw new BusinessException(
+        'You do not have access to this attachment',
+        ErrorCode.PROPERTY_ACCESS_DENIED,
+        HttpStatus.FORBIDDEN,
       );
     }
 
@@ -135,9 +153,7 @@ export class UploadsService {
     // Delete from Supabase Storage - reconstruct path from URL
     const urlParts = new URL(attachment.url);
     const storagePath = urlParts.pathname.split(`/${STORAGE_BUCKET}/`)[1] || '';
-    const { error } = await this.supabase.storage
-      .from(STORAGE_BUCKET)
-      .remove([storagePath]);
+    const { error } = await this.supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
 
     if (error) {
       throw new BusinessException(
@@ -155,7 +171,33 @@ export class UploadsService {
     return { deleted: true };
   }
 
-  async getAttachments(ticketId: string) {
+  async getAttachments(ticketId: string, userId: string) {
+    // Validate user has access to the ticket's property
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId, deletedAt: null },
+      select: { propertyId: true },
+    });
+
+    if (!ticket) {
+      throw new BusinessException(
+        'Ticket not found',
+        ErrorCode.TICKET_NOT_FOUND,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const membership = await this.prisma.propertyMember.findUnique({
+      where: { propertyId_userId: { propertyId: ticket.propertyId, userId } },
+    });
+
+    if (!membership) {
+      throw new BusinessException(
+        'You do not have access to this ticket',
+        ErrorCode.PROPERTY_ACCESS_DENIED,
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     return this.prisma.ticketAttachment.findMany({
       where: { ticketId },
       include: {

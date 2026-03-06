@@ -55,9 +55,7 @@ export class TicketActivityService {
       data,
       meta: {
         hasMore,
-        nextCursor: hasMore
-          ? data[data.length - 1].createdAt.toISOString()
-          : null,
+        nextCursor: hasMore ? data[data.length - 1].createdAt.toISOString() : null,
       },
     };
   }

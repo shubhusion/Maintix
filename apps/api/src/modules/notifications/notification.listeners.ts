@@ -29,11 +29,7 @@ export class NotificationListeners {
   }
 
   @OnEvent('ticket.assigned')
-  async handleTicketAssigned(payload: {
-    ticket: any;
-    actorId: string;
-    technicianId: string;
-  }) {
+  async handleTicketAssigned(payload: { ticket: any; actorId: string; technicianId: string }) {
     const { ticket, technicianId } = payload;
 
     // Notify the assigned technician
@@ -188,11 +184,7 @@ export class NotificationListeners {
   }
 
   @OnEvent('ticket.priorityChanged')
-  async handlePriorityChanged(payload: {
-    ticket: any;
-    actorId: string;
-    previousPriority: string;
-  }) {
+  async handlePriorityChanged(payload: { ticket: any; actorId: string; previousPriority: string }) {
     const { ticket, actorId } = payload;
 
     // Notify assigned technician
@@ -216,9 +208,7 @@ export class NotificationListeners {
     });
 
     return members.filter(
-      (m) =>
-        m.user.role === Role.MANAGER &&
-        (!excludeUserId || m.userId !== excludeUserId),
+      (m) => m.user.role === Role.MANAGER && (!excludeUserId || m.userId !== excludeUserId),
     );
   }
 }

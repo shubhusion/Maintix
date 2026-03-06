@@ -13,6 +13,9 @@ import {
   Play,
   UserCheck,
   RotateCcw,
+  Paperclip,
+  FileText,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -53,11 +56,7 @@ import { useToast } from '@/hooks/use-toast';
 import { statusConfig } from '@/lib/ticket-config';
 import { TicketStatus, Priority, Role } from '@maintix/shared-types';
 
-export default function TicketDetailPage({
-  params,
-}: {
-  params: Promise<{ ticketId: string }>;
-}) {
+export default function TicketDetailPage({ params }: { params: Promise<{ ticketId: string }> }) {
   const { ticketId } = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -114,7 +113,9 @@ export default function TicketDetailPage({
         <AlertCircle className="mb-4 h-12 w-12 text-muted-foreground/50" />
         <h3 className="text-lg font-medium">Ticket not found</h3>
         <Link href="/dashboard/tickets">
-          <Button variant="link" className="mt-2">Go back to tickets</Button>
+          <Button variant="link" className="mt-2">
+            Go back to tickets
+          </Button>
         </Link>
       </div>
     );
@@ -127,12 +128,7 @@ export default function TicketDetailPage({
     <div className="space-y-6">
       {/* Back button + header */}
       <div className="flex items-start gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-          className="mt-1"
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="mt-1">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
@@ -170,12 +166,71 @@ export default function TicketDetailPage({
           {ticket.cancellationReason && (
             <Card className="border-error-500/30">
               <CardHeader>
-                <CardTitle className="text-base text-error-500">
-                  Cancellation Reason
-                </CardTitle>
+                <CardTitle className="text-base text-error-500">Cancellation Reason</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm max-w-prose">{ticket.cancellationReason}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Attachments */}
+          {ticket.attachments && ticket.attachments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  Attachments ({ticket.attachments.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {ticket.attachments.map(
+                    (att: {
+                      id: string;
+                      url: string;
+                      fileName: string;
+                      mimeType: string;
+                      fileSize: number;
+                    }) => {
+                      const isImage = att.mimeType.startsWith('image/');
+                      return (
+                        <div key={att.id} className="group relative">
+                          {isImage ? (
+                            <a
+                              href={att.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block aspect-square overflow-hidden rounded-lg border bg-muted"
+                            >
+                              <img
+                                src={att.url}
+                                alt={att.fileName}
+                                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                              />
+                            </a>
+                          ) : (
+                            <a
+                              href={att.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex aspect-square flex-col items-center justify-center gap-2 rounded-lg border bg-muted transition-colors hover:bg-muted/80"
+                            >
+                              <FileText className="h-8 w-8 text-muted-foreground" />
+                              <Download className="h-4 w-4 text-muted-foreground" />
+                            </a>
+                          )}
+                          <p
+                            className="mt-1 truncate text-xs text-muted-foreground"
+                            title={att.fileName}
+                          >
+                            {att.fileName}
+                          </p>
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -195,70 +250,65 @@ export default function TicketDetailPage({
               )}
 
               {/* Technician: Start Work */}
-              {isTechnician &&
-                isAssignee &&
-                ticket.status === TicketStatus.ASSIGNED && (
-                  <Button
-                    disabled={startWork.isPending}
-                    onClick={() =>
-                      handleAction(
-                        () =>
-                          startWork.mutateAsync({
-                            ticketId: ticket.id,
-                            version: ticket.version,
-                          }),
-                        'Work started',
-                      )
-                    }
-                  >
-                    <Play className="mr-2 h-4 w-4" />
-                    {startWork.isPending ? 'Starting…' : 'Start Work'}
-                  </Button>
-                )}
+              {isTechnician && isAssignee && ticket.status === TicketStatus.ASSIGNED && (
+                <Button
+                  disabled={startWork.isPending}
+                  onClick={() =>
+                    handleAction(
+                      () =>
+                        startWork.mutateAsync({
+                          ticketId: ticket.id,
+                          version: ticket.version,
+                        }),
+                      'Work started',
+                    )
+                  }
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  {startWork.isPending ? 'Starting…' : 'Start Work'}
+                </Button>
+              )}
 
               {/* Technician: Submit Completion */}
-              {isTechnician &&
-                isAssignee &&
-                ticket.status === TicketStatus.IN_PROGRESS && (
-                  <Button
-                    disabled={submitCompletion.isPending}
-                    onClick={() =>
-                      handleAction(
-                        () =>
-                          submitCompletion.mutateAsync({
-                            ticketId: ticket.id,
-                            version: ticket.version,
-                          }),
-                        'Submitted for approval',
-                      )
-                    }
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    {submitCompletion.isPending ? 'Submitting…' : 'Submit Completion'}
-                  </Button>
-                )}
+              {isTechnician && isAssignee && ticket.status === TicketStatus.IN_PROGRESS && (
+                <Button
+                  disabled={submitCompletion.isPending}
+                  onClick={() =>
+                    handleAction(
+                      () =>
+                        submitCompletion.mutateAsync({
+                          ticketId: ticket.id,
+                          version: ticket.version,
+                        }),
+                      'Submitted for approval',
+                    )
+                  }
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {submitCompletion.isPending ? 'Submitting…' : 'Submit Completion'}
+                </Button>
+              )}
 
               {/* Manager: Approve */}
-              {isManager &&
-                ticket.status === TicketStatus.AWAITING_APPROVAL && (
-                  <Button
-                    disabled={approveTicket.isPending}
-                    onClick={() =>
-                      handleAction(
-                        () =>
-                          approveTicket.mutateAsync({
-                            ticketId: ticket.id,
-                            version: ticket.version,
-                          }),
-                        'Ticket approved',
-                      )
-                    }
-                    className="bg-success-600 hover:bg-success-600/90"
-                  >
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    {approveTicket.isPending ? 'Approving…' : 'Approve'}
-                  </Button>
-                )}
+              {isManager && ticket.status === TicketStatus.AWAITING_APPROVAL && (
+                <Button
+                  disabled={approveTicket.isPending}
+                  onClick={() =>
+                    handleAction(
+                      () =>
+                        approveTicket.mutateAsync({
+                          ticketId: ticket.id,
+                          version: ticket.version,
+                        }),
+                      'Ticket approved',
+                    )
+                  }
+                  className="bg-success-600 hover:bg-success-600/90"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {approveTicket.isPending ? 'Approving…' : 'Approve'}
+                </Button>
+              )}
 
               {/* Manager: Update Priority */}
               {isManager &&
@@ -335,9 +385,7 @@ export default function TicketDetailPage({
                 <AlertCircle className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <p className="text-xs text-muted-foreground">Priority</p>
-                  <p className="text-sm font-medium capitalize">
-                    {ticket.priority.toLowerCase()}
-                  </p>
+                  <p className="text-sm font-medium capitalize">{ticket.priority.toLowerCase()}</p>
                 </div>
               </div>
 
@@ -423,7 +471,9 @@ export default function TicketDetailPage({
             <DialogDescription>Provide a reason for cancelling this ticket.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>Reason for cancellation <span className="text-error-500">*</span></Label>
+            <Label>
+              Reason for cancellation <span className="text-error-500">*</span>
+            </Label>
             <Textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

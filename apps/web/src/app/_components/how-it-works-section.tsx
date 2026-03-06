@@ -68,9 +68,7 @@ export function HowItWorksSection() {
                     {step}
                   </div>
                   <h3 className="text-lg font-bold text-foreground">{title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                    {desc}
-                  </p>
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{desc}</p>
                 </div>
               </div>
             </BlurFade>
