@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, type MotionValue } from 'framer-motion';
+import { motion, type MotionValue } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';

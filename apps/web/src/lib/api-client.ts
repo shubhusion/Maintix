@@ -85,6 +85,50 @@ export const api = {
       method: 'POST',
       body: formData,
     }),
+
+  uploadWithProgress: <T>(
+    endpoint: string,
+    formData: FormData,
+    onProgress?: (percent: number) => void,
+  ): Promise<T> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const token = getToken();
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const result = JSON.parse(xhr.responseText) as ApiResponse<T>;
+          resolve(result.data);
+        } else {
+          try {
+            const error: ApiErrorResponse = JSON.parse(xhr.responseText);
+            if (xhr.status === 401 && typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('auth:session-expired'));
+            }
+            reject(new ApiError(error.statusCode, error.errorCode, error.message));
+          } catch {
+            reject(new ApiError(xhr.status, undefined, xhr.statusText));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new ApiError(0, undefined, 'Network error'));
+      });
+
+      xhr.open('POST', `${API_URL}${endpoint}`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      xhr.send(formData);
+    });
+  },
 };
 
 export { ApiError };

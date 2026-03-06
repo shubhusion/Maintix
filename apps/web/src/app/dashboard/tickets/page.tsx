@@ -93,6 +93,7 @@ export default function TicketsPage() {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateTicketFormData>({
     resolver: zodResolver(createTicketSchema),
@@ -296,9 +297,16 @@ export default function TicketsPage() {
                 rows={4}
                 {...register('description')}
               />
-              {errors.description && (
-                <p className="text-sm text-error-500">{errors.description.message}</p>
-              )}
+              <div className="flex justify-between">
+                <p className="text-xs text-muted-foreground">
+                  {errors.description && (
+                    <span className="text-error-500">{errors.description.message}</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {watch('description')?.length ?? 0} / 5000
+                </p>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>

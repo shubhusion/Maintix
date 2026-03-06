@@ -317,3 +317,38 @@ services:
 | Variable              | Required | Default                        | Description  |
 | --------------------- | -------- | ------------------------------ | ------------ |
 | `NEXT_PUBLIC_API_URL` | No       | `http://localhost:3001/api/v1` | API base URL |
+
+## API Versioning Strategy
+
+Maintix uses **URL-prefix versioning** with the global prefix `api/v1` set in `main.ts`:
+
+```typescript
+app.setGlobalPrefix('api/v1');
+```
+
+### Current Design
+
+- **All endpoints** are served under `/api/v1/...` (e.g., `/api/v1/tickets`, `/api/v1/auth/login`).
+- **Swagger docs** are available at `/api/docs` (outside the versioned prefix).
+- **Health check** is at `/api/v1/health`.
+
+### When to Introduce v2
+
+A new API version (`/api/v2`) should be introduced only when:
+
+1. **Breaking changes** to request/response shapes are needed (e.g., renaming fields, removing endpoints).
+2. **Behavioral changes** that would break existing clients (e.g., changing pagination from cursor to offset).
+3. **Authentication scheme changes** (e.g., migrating from JWT to OAuth2 flows).
+
+Non-breaking additions (new endpoints, new optional fields, new query parameters) do **not** require a version bump — they can be added to `v1`.
+
+### Migration Path
+
+When `v2` is needed:
+
+1. Create a `v2/` module folder or use NestJS versioning (`@Version('2')` decorator).
+2. Keep `v1` running in parallel during deprecation window.
+3. Return `Sunset` and `Deprecation` headers on `v1` responses.
+4. Document timeline in API changelog and notify consumers.
+
+> **Current status:** The application is in its initial release. `v1` is the only version and no breaking changes are planned.

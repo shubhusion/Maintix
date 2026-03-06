@@ -7,6 +7,7 @@ import { TicketStatusChart } from '@/components/ticket-status-chart';
 import { useAuth } from '@/contexts/auth-context';
 import { useProperties } from '@/hooks/use-properties';
 import { useAllPropertyTickets } from '@/hooks/use-tickets';
+import { useUsers } from '@/hooks/use-users';
 import { Role, TicketStatus } from '@maintix/shared-types';
 import Link from 'next/link';
 
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const { data: properties, isLoading } = useProperties();
   const propertyIds = properties?.map((p) => p.id) ?? [];
   const { tickets, isLoading: ticketsLoading } = useAllPropertyTickets(propertyIds);
+  const { data: allUsers, isLoading: usersLoading } = useUsers();
 
   const openCount = tickets.filter((t) => t.status === TicketStatus.OPEN).length;
   const awaitingCount = tickets.filter((t) => t.status === TicketStatus.AWAITING_APPROVAL).length;
@@ -88,7 +90,9 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold tracking-tight">—</div>
+                <div className="text-3xl font-bold tracking-tight">
+                  {usersLoading ? '—' : (allUsers?.data?.length ?? 0)}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">Across all properties</p>
               </CardContent>
             </Card>

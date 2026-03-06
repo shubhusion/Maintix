@@ -25,6 +25,7 @@ RUN pnpm --filter @maintix/shared-types build
 # NEXT_PUBLIC_API_URL must be set at build time (baked into client bundle)
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV BUILD_STANDALONE=true
 
 # Build the Next.js app (uses standalone output mode)
 RUN pnpm --filter @maintix/web build

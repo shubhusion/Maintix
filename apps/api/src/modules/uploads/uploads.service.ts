@@ -1,7 +1,8 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
 import { PrismaService } from '@/common/database/prisma.service';
 import { BusinessException } from '@/common/exceptions/business.exception';
 import {
@@ -12,9 +13,14 @@ import {
   MAX_ATTACHMENTS_PER_TICKET,
 } from '@maintix/shared-types';
 
+const IMAGE_MAX_WIDTH = 1920;
+const IMAGE_MAX_HEIGHT = 1080;
+const IMAGE_QUALITY = 80;
+
 @Injectable()
 export class UploadsService {
   private supabase: SupabaseClient;
+  private readonly logger = new Logger(UploadsService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -24,6 +30,23 @@ export class UploadsService {
       this.config.getOrThrow('SUPABASE_URL'),
       this.config.getOrThrow('SUPABASE_SERVICE_KEY'),
     );
+  }
+
+  private async optimizeImage(buffer: Buffer, mimeType: string): Promise<Buffer> {
+    let pipeline = sharp(buffer).resize(IMAGE_MAX_WIDTH, IMAGE_MAX_HEIGHT, {
+      fit: 'inside',
+      withoutEnlargement: true,
+    });
+
+    if (mimeType === 'image/jpeg') {
+      pipeline = pipeline.jpeg({ quality: IMAGE_QUALITY });
+    } else if (mimeType === 'image/png') {
+      pipeline = pipeline.png({ compressionLevel: 8 });
+    } else if (mimeType === 'image/webp') {
+      pipeline = pipeline.webp({ quality: IMAGE_QUALITY });
+    }
+
+    return pipeline.toBuffer();
   }
 
   async uploadTicketAttachment(
@@ -80,10 +103,25 @@ export class UploadsService {
     const fileUuid = uuidv4();
     const storagePath = `${propertyId}/${ticketId}/${fileUuid}-${file.originalname}`;
 
+    // Optimize images (skip PDFs and other non-image files)
+    let fileBuffer = file.buffer;
+    let fileSize = file.size;
+    if (file.mimetype.startsWith('image/')) {
+      try {
+        fileBuffer = await this.optimizeImage(file.buffer, file.mimetype);
+        fileSize = fileBuffer.length;
+        this.logger.log(
+          `Image optimized: ${file.originalname} ${file.size} → ${fileSize} bytes`,
+        );
+      } catch {
+        this.logger.warn(`Image optimization failed for ${file.originalname}, uploading original`);
+      }
+    }
+
     // Upload to Supabase Storage
     const { error: uploadError } = await this.supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(storagePath, file.buffer, {
+      .upload(storagePath, fileBuffer, {
         contentType: file.mimetype,
         upsert: false,
       });
@@ -105,7 +143,7 @@ export class UploadsService {
         ticketId,
         uploadedById: userId,
         fileName: file.originalname,
-        fileSize: file.size,
+        fileSize: fileSize,
         mimeType: file.mimetype,
         url: urlData.publicUrl,
       },

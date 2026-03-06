@@ -143,7 +143,7 @@ export default function PropertyDetailPage({
 
   const tickets = ticketsData?.data ?? [];
   const memberIds = new Set(members?.map((m) => m.userId) ?? []);
-  const addableUsers = allUsers?.filter((u) => !memberIds.has(u.id)) ?? [];
+  const addableUsers = allUsers?.data?.filter((u) => !memberIds.has(u.id)) ?? [];
 
   return (
     <div className="space-y-6">

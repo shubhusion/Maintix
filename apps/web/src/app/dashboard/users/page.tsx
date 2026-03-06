@@ -207,6 +207,9 @@ export default function UsersPage() {
                 {...form.register('password')}
                 placeholder="••••••••"
               />
+              <p className="text-xs text-muted-foreground">
+                Must be at least 8 characters, with an uppercase letter and a number.
+              </p>
               {form.formState.errors.password && (
                 <p className="text-xs text-error-500">{form.formState.errors.password.message}</p>
               )}

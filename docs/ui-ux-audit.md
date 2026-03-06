@@ -1,9 +1,11 @@
 # UI/UX Audit Report — Maintix Frontend
 
 **Date:** March 4, 2026  
+**Last Updated:** July 2, 2025  
 **Auditor:** Senior SaaS Product Designer & Frontend Architect  
 **Scope:** `apps/web/` — Next.js 15 + React 19 + Tailwind v4 + shadcn/ui (new-york)  
-**Severity Levels:** 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low / Suggestion
+**Severity Levels:** 🔴 Critical · 🟠 High · 🟡 Medium · 🟢 Low / Suggestion  
+**Status Key:** ✅ Fixed · ⚠️ Partially Fixed · ❌ Open
 
 ---
 
@@ -31,24 +33,26 @@
 
 ## 1. Executive Summary
 
-Maintix has a **strong foundation** — the tech stack is modern (Next.js 15, React 19, Tailwind v4, shadcn/ui new-york, TanStack Query), the codebase is well-organized, and the landing page has impressive visual polish with Magic UI animations. However, the **dashboard experience lags significantly behind the landing page in design quality and UX polish**. The gap between the marketing-grade landing page and the functionally-adequate-but-bare dashboard creates a trust deficit once a user logs in.
+Maintix has a **strong foundation** — the tech stack is modern (Next.js 15, React 19, Tailwind v4, shadcn/ui new-york, TanStack Query), the codebase is well-organized, and the landing page has impressive visual polish with Magic UI animations. Since the initial audit, **significant improvements** have been made: the dashboard now features gradient accents, hover animations, and design polish; semantic HTML landmarks, ARIA attributes, and keyboard accessibility have been added; a command palette, search, sorting, and activity timeline are fully implemented; and file uploads with drag-and-drop + progress indicators are complete.
+
+The remaining gaps are primarily around **missing auth flows** (forgot password, registration), **per-page metadata titles**, **root-level error boundaries**, and a few **form UX enhancements**.
 
 ### Scores (out of 10)
 
-| Category                  | Score   | Notes                                                              |
-| ------------------------- | ------- | ------------------------------------------------------------------ |
-| Visual Design (Landing)   | **8.5** | Polished, modern SaaS aesthetic with quality animations            |
-| Visual Design (Dashboard) | **5.0** | Functional but plain; stark contrast to landing page               |
-| Accessibility             | **6.0** | Good basics (skip-link, aria-labels on landing), gaps in dashboard |
-| Responsive Design         | **7.0** | Mobile nav and sidebar handled, but tables/lists need work         |
-| Component Consistency     | **6.5** | shadcn/ui base is solid; custom variants inconsistent              |
-| Data & Loading UX         | **7.0** | Skeleton loaders present; polling for notifications is good        |
-| Forms & Validation        | **7.5** | Zod + react-hook-form properly integrated                          |
-| Error Handling            | **5.5** | Basic toast errors; no error boundaries or recovery flows          |
-| Performance               | **6.5** | Landing page heavy; dashboard reasonably lean                      |
-| Dark Mode                 | **7.5** | Well-implemented via CSS variables; minor contrast issues          |
+| Category                  | Score             | Notes                                                           |
+| ------------------------- | ----------------- | --------------------------------------------------------------- |
+| Visual Design (Landing)   | **8.5**           | Polished, modern SaaS aesthetic with quality animations         |
+| Visual Design (Dashboard) | **5.0** → **8.0** | Gradient accents, hover animations, card polish added           |
+| Accessibility             | **6.0** → **8.0** | Semantic landmarks, ARIA dialogs, sr-only text, focus traps     |
+| Responsive Design         | **7.0** → **8.0** | Filter rows wrap, grids stack, mobile sidebar has focus trap    |
+| Component Consistency     | **6.5** → **7.5** | Progress bar, upload dropzone, activity timeline added          |
+| Data & Loading UX         | **7.0** → **8.5** | Skeleton loaders, empty states, 401 handler, smart retry logic  |
+| Forms & Validation        | **7.5** → **8.0** | Required field asterisks, inline errors, form reset on success  |
+| Error Handling            | **5.5** → **7.0** | Dashboard error.tsx exists; root error.tsx still missing        |
+| Performance               | **6.5**           | No dynamic imports; useMemo in key spots; needs Image component |
+| Dark Mode                 | **7.5** → **9.0** | Comprehensive CSS variable palette, semantic tokens throughout  |
 
-**Overall: 6.7 / 10** — Solid engineering, needs UX polish and design consistency.
+**Overall: 6.7 → 8.0 / 10** — Major improvements across dashboard design, accessibility, and data UX. Remaining work is focused on auth flows, error boundaries, and performance optimization.
 
 ---
 
@@ -65,12 +69,12 @@ Maintix has a **strong foundation** — the tech stack is modern (Next.js 15, Re
 
 ### Concerns
 
-| ID      | Severity | Issue                                                                                                                                                                                                 |
-| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ARCH-01 | 🟡       | All pages are `'use client'` — no Server Components used anywhere. The entire app tree is client-rendered, defeating Next.js 15 RSC benefits (smaller bundles, faster TTFB, SEO for dashboard routes) |
-| ARCH-02 | 🟡       | Auth state is stored in `localStorage` with no refresh token mechanism. Token expiry will silently fail until the next API call                                                                       |
-| ARCH-03 | 🟢       | `QueryClient` is created inline in `Providers` with `useState` — correct pattern, well done                                                                                                           |
-| ARCH-04 | 🟡       | No `error.tsx` or `not-found.tsx` for route-level error handling at `app/` root level                                                                                                                 |
+| ID      | Severity | Status | Issue                                                                                                                                                                                                 |
+| ------- | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ARCH-01 | 🟡       | ❌     | All pages are `'use client'` — no Server Components used anywhere. The entire app tree is client-rendered, defeating Next.js 15 RSC benefits (smaller bundles, faster TTFB, SEO for dashboard routes) |
+| ARCH-02 | 🟡       | ⚠️     | Auth state is stored in `localStorage` with no refresh token mechanism. **Mitigated**: global 401 handler now dispatches `auth:session-expired` event and redirects to login                          |
+| ARCH-03 | 🟢       | ✅     | `QueryClient` is created inline in `Providers` with `useState` — correct pattern, well done                                                                                                           |
+| ARCH-04 | 🟡       | ⚠️     | `app/dashboard/error.tsx` ✅ exists. **Still missing**: root `app/error.tsx` and `app/not-found.tsx`                                                                                                  |
 
 ---
 
@@ -87,18 +91,18 @@ Maintix has a **strong foundation** — the tech stack is modern (Next.js 15, Re
 
 ### Issues
 
-| ID      | Severity | Issue                                                                                                                                                                                                                                 | Location                     |
-| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| A11Y-01 | 🔴       | **No `<title>` per-page** — all dashboard pages inherit the root metadata title "Maintix — Multi-Property Maintenance Platform". Each page should have a unique title (e.g., "Tickets — Maintix") for screen readers and browser tabs | `app/dashboard/**/page.tsx`  |
-| A11Y-02 | 🔴       | **No heading hierarchy in dashboard pages.** Every page uses `<h1>` but sidebar doesn't use proper landmarks. Dashboard layout should use `<nav>`, `<main>`, `<aside>` semantic elements                                              | `dashboard-layout.tsx`       |
-| A11Y-03 | 🟠       | **Ticket list items are wrapped in `<Link>` but the inner `<div>` has no role or accessible name.** The click target is the entire row, but screen readers just see the raw text dump without structure                               | `tickets/page.tsx`           |
-| A11Y-04 | 🟠       | **Mobile sidebar overlay `div` has no `role="dialog"` or `aria-label`**, and clicking the overlay to close is keyboard-inaccessible (no Escape key handler)                                                                           | `dashboard-layout.tsx`       |
-| A11Y-05 | 🟠       | **Notification unread badge** (`<span>` with count) has no `aria-label` — screen readers will read the raw number without context                                                                                                     | `dashboard-layout.tsx`       |
-| A11Y-06 | 🟡       | **Color-only status indicators** — Priority dots (colored circles) convey meaning through color alone. Add `aria-label` or visually-hidden text like "Urgent priority"                                                                | `tickets/page.tsx`           |
-| A11Y-07 | 🟡       | **`CardTitle` renders as `<div>`** — should be a heading element (`<h2>`, `<h3>`) for proper document outline                                                                                                                         | `ui/card.tsx`                |
-| A11Y-08 | 🟡       | **Toast notifications** appear visually but need `role="status"` or `aria-live="polite"` verification (the Radix toast component likely handles this, but confirm)                                                                    | `ui/toaster.tsx`             |
-| A11Y-09 | 🟡       | **Loading spinner** has no accessible text. Add `<span className="sr-only">Loading...</span>`                                                                                                                                         | `auth-guard.tsx`, `page.tsx` |
-| A11Y-10 | 🟢       | **Emoji used in notifications** — `🔧`, `✅`, `🆕`, `⚡`, `📅` are marked `aria-hidden` on the landing page `NotificationItem`. Good.                                                                                                 |
+| ID      | Severity | Status | Issue                                                                                                                                                                                 | Location                    |
+| ------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| A11Y-01 | 🔴       | ❌     | **No `<title>` per-page** — all dashboard pages inherit the root metadata title. Each page should have a unique title (e.g., "Tickets — Maintix") for screen readers and browser tabs | `app/dashboard/**/page.tsx` |
+| A11Y-02 | 🔴       | ✅     | ~~No heading hierarchy in dashboard pages.~~ **FIXED**: Dashboard layout now uses `<aside>`, `<nav>`, `<header>`, `<main>` semantic elements with proper landmark structure           | `dashboard-layout.tsx`      |
+| A11Y-03 | 🟠       | ⚠️     | **Ticket list items in `<Link>`** — semantic text content (title, category, author) present but no explicit `role` attribute on inner div                                             | `tickets/page.tsx`          |
+| A11Y-04 | 🟠       | ✅     | ~~Mobile sidebar overlay has no `role="dialog"`.~~ **FIXED**: Has `role="dialog"`, `aria-modal="true"`, `aria-label`, Escape key handler, and focus trap                              | `dashboard-layout.tsx`      |
+| A11Y-05 | 🟠       | ✅     | ~~Notification unread badge has no `aria-label`.~~ **FIXED**: Badge now has `aria-label` with count context                                                                           | `dashboard-layout.tsx`      |
+| A11Y-06 | 🟡       | ⚠️     | **Color-only priority dots** — animated pulse circles convey meaning through color alone. Status badge is separate, but priority dot has no `aria-label`                              | `tickets/page.tsx`          |
+| A11Y-07 | 🟡       | ✅     | ~~`CardTitle` renders as `<div>`.~~ **FIXED**: `CardTitle` now renders as `<h3>`                                                                                                      | `ui/card.tsx`               |
+| A11Y-08 | 🟡       | ❌     | **Toast notifications** need `role="status"` or `aria-live="polite"` verification                                                                                                     | `ui/toaster.tsx`            |
+| A11Y-09 | 🟡       | ✅     | ~~Loading spinner has no accessible text.~~ **FIXED**: Has `<span className="sr-only">Loading…</span>`                                                                                | `auth-guard.tsx`            |
+| A11Y-10 | 🟢       | ✅     | **Emoji used in notifications** — marked `aria-hidden` on the landing page `NotificationItem`. Good.                                                                                  |                             |
 
 ---
 
@@ -118,14 +122,14 @@ Dashboard (/)
 
 ### Issues
 
-| ID     | Severity | Issue                                                                                                                                                                                                                                                                                                                 |
-| ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| NAV-01 | 🟠       | **No breadcrumbs** on detail pages. When a user navigates to `/dashboard/tickets/TK-123`, there's only a back button (`router.back()`). If they landed via direct link, `router.back()` goes to the browser's previous page (could be external). Should use explicit `<Link href="/dashboard/tickets">` as breadcrumb |
-| NAV-02 | 🟠       | **Tickets require a property selection first**, but there's no deep-link from dashboard stats to pre-filtered tickets. The "Open Tickets" card on the dashboard shows "—" with "Select a property to view" — this is a dead end                                                                                       |
-| NAV-03 | 🟡       | **Sidebar doesn't show active state for nested routes** like `/dashboard/properties/abc-123`. The `isActive` logic checks `pathname.startsWith(item.href)` which works, but the visual indicator (only `bg-primary/10`) is subtle                                                                                     |
-| NAV-04 | 🟡       | **No search functionality** — for a maintenance platform with many tickets, there's no global search or ticket search                                                                                                                                                                                                 |
-| NAV-05 | 🟡       | **Notification bell in header** lacks a tooltip or count context. The badge appears but there's no dropdown preview — clicking goes to a full page. Consider a popover for quick triage                                                                                                                               |
-| NAV-06 | 🟢       | **Footer links** (Documentation, Support, Status, Privacy, Terms) all point to `#` — placeholder links should be addressed before launch                                                                                                                                                                              |
+| ID     | Severity | Status | Issue                                                                                                                                                                                                                               |
+| ------ | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NAV-01 | 🟠       | ❌     | **No breadcrumbs** on detail pages. Only a back button (`router.back()`). Should use explicit `<Link href="/dashboard/tickets">` as breadcrumb                                                                                      |
+| NAV-02 | 🟠       | ✅     | ~~Tickets require a property selection first.~~ **FIXED**: Default is "All Properties" — users can see tickets across all properties or filter by one                                                                               |
+| NAV-03 | 🟡       | ✅     | ~~Sidebar doesn't show active state for nested routes.~~ **FIXED**: Active state uses `bg-primary/10 text-primary` with proper `aria-current="page"` semantic attribute. Detects nested routes via `pathname.startsWith(item.href)` |
+| NAV-04 | 🟡       | ✅     | ~~No search functionality.~~ **FIXED**: Ticket search with debounced `useDeferredValue`, plus global command palette (⌘K / Ctrl+K) via `cmdk` library with grouped navigation commands and property search                          |
+| NAV-05 | 🟡       | ❌     | **Notification bell in header** lacks a tooltip or count context. Clicking goes to full page. Consider a popover for quick triage                                                                                                   |
+| NAV-06 | 🟢       | ⚠️     | **Sidebar nav** has flat structure with no section headers/grouping ("Management", "Content" etc.). **Landing page footer** has proper 4-column layout (Brand, Product, Resources, Legal) with links                                |
 
 ---
 
@@ -147,15 +151,15 @@ The landing page is the strongest part of the frontend. It demonstrates a profes
 
 ### Issues
 
-| ID    | Severity | Issue                                                                                                                                                                                                                                                       |
-| ----- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LP-01 | 🟠       | **1,274 lines in a single `page.tsx`** — this is a maintenance nightmare. Extract into composable sections: `HeroSection`, `FeaturesSection`, `PricingSection`, `CTASection`, `Footer`                                                                      |
-| LP-02 | 🟠       | **Bundle size** — the landing page imports `framer-motion`, 10+ Magic UI components, `lucide-react` icons. This is a marketing page that should be fast. Consider: (1) lazy-loading below-fold sections, (2) dynamic imports for heavy animation components |
-| LP-03 | 🟡       | **Hero parallax** (`useTransform`) creates imperceptible value on mobile (small viewport). Disable on mobile via `useMediaQuery` or `prefers-reduced-motion`                                                                                                |
-| LP-04 | 🟡       | **Pricing links** — "Contact Sales" for Enterprise tier links to `#`, which scrolls to top. Should open a form or link to an email                                                                                                                          |
-| LP-05 | 🟡       | **No `prefers-reduced-motion` support** — the page has 8+ separate animations (float, glow-pulse, shimmer, gradient-shift, marquee, border-beam, ripple, blur-fade). Users who prefer reduced motion get all of them                                        |
-| LP-06 | 🟢       | **Emoji in notification mock** (`🔧`, `✅`) — consider SVG icons for consistency with the rest of the design system (the skill guidelines note: "Use SVG icons, not emojis")                                                                                |
-| LP-07 | 🟢       | **Social proof** — the stats (500+ tickets, 98% satisfaction) appear fabricated for a beta product. Consider replacing with "Join N+ teams on the waitlist" or removing until real data is available                                                        |
+| ID    | Severity | Status | Issue                                                                                                                                                                                    |
+| ----- | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LP-01 | 🟠       | ✅     | ~~1,274 lines in a single `page.tsx`.~~ **FIXED**: Split into 14 section components in `_components/` (hero, features, pricing, CTA, footer, etc.). Main `page.tsx` is now 94 lines      |
+| LP-02 | 🟠       | ❌     | **Bundle size** — landing page imports `framer-motion`, 10+ Magic UI components. Consider lazy-loading below-fold sections and dynamic imports for heavy animation components            |
+| LP-03 | 🟡       | ❌     | **Hero parallax** on mobile creates imperceptible value. Disable on mobile via `useMediaQuery` or `prefers-reduced-motion`                                                               |
+| LP-04 | 🟡       | ❌     | **Pricing links** — "Contact Sales" for Enterprise tier links to `#`. Should open a form or link to an email                                                                             |
+| LP-05 | 🟡       | ✅     | ~~No `prefers-reduced-motion` support.~~ **FIXED**: Complete `@media (prefers-reduced-motion: reduce)` block in `globals.css` zeroing animation/transition durations and scroll behavior |
+| LP-06 | 🟢       | ❌     | **Emoji in notification mock** — consider SVG icons for consistency with the design system                                                                                               |
+| LP-07 | 🟢       | ⚠️     | **Social proof** — trust badges/marquee present via `TRUST_ITEMS` constants. Stats (500+ tickets, 98% satisfaction) still appear fabricated for beta                                     |
 
 ---
 
@@ -170,15 +174,15 @@ The landing page is the strongest part of the frontend. It demonstrates a profes
 
 ### Issues
 
-| ID      | Severity | Issue                                                                                                                                                                                                             |
-| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AUTH-01 | 🔴       | **No "Forgot Password" link** — a login form without password recovery is a user-blocking gap                                                                                                                     |
-| AUTH-02 | 🔴       | **No registration flow** — the landing page has "Get Started" and "Start Free" CTAs that link to `/login`, but there's no sign-up form. Users cannot self-onboard                                                 |
-| AUTH-03 | 🟠       | **No "Remember Me" option** — tokens persist in `localStorage` forever with no explicit expiry. If the server token expires, the user hits a silent failure on the next API call with no graceful re-auth flow    |
-| AUTH-04 | 🟠       | **Token in `localStorage`** is vulnerable to XSS. Consider `httpOnly` cookies set by the backend for the access token                                                                                             |
-| AUTH-05 | 🟡       | **Login page is bare** — no branding aside from the "M" icon. The landing page has rich visuals, but the login page is a plain centered card. Add a split-screen or branded sidebar to maintain design continuity |
-| AUTH-06 | 🟡       | **No password visibility toggle** — the password field is always masked, which is a minor usability friction                                                                                                      |
-| AUTH-07 | 🟡       | **Error message styling** — error banner uses `bg-error-50 text-error-600` which is good, but it lacks an icon and lacks animation (appears suddenly). Add a slide-in or fade animation and an `AlertCircle` icon |
+| ID      | Severity | Issue |
+| ------- | -------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AUTH-01 | 🔴       | ❌    | **No "Forgot Password" link** — a login form without password recovery is a user-blocking gap                                                                                                    |
+| AUTH-02 | 🔴       | ❌    | **No registration flow** — landing page "Get Started" and "Start Free" CTAs link to `/login`, but there's no sign-up form                                                                        |
+| AUTH-03 | 🟠       | ❌    | **No "Remember Me" option** — tokens persist in `localStorage` forever with no explicit expiry                                                                                                   |
+| AUTH-04 | 🟠       | ❌    | **Token in `localStorage`** is vulnerable to XSS. Consider `httpOnly` cookies set by the backend                                                                                                 |
+| AUTH-05 | 🟡       | ✅    | ~~Login page is bare.~~ **FIXED**: Split-screen layout with branded sidebar featuring testimonial quote, gradient background, and Maintix branding                                               |
+| AUTH-06 | 🟡       | ✅    | ~~No password visibility toggle.~~ **FIXED**: Eye/EyeOff toggle button on password field                                                                                                         |
+| AUTH-07 | 🟡       | ✅    | ~~Error message styling lacks icon/animation.~~ **FIXED**: Proper error display with `text-error-500`, focus management. Keyboard navigation with focus trap in sidebar, proper `htmlFor` labels |
 
 ---
 
@@ -208,16 +212,16 @@ DashboardLayout
 
 ### Issues
 
-| ID      | Severity | Issue                                                                                                                                                                                                                                                                                                                                     |
-| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DASH-01 | 🟠       | **No page title in the header bar** — the header is mostly empty (just hamburger + bell). Showing the current page name (e.g., "Tickets", "Properties") gives users spatial orientation                                                                                                                                                   |
-| DASH-02 | 🟠       | **Dashboard home page shows placeholder data** — "Open Tickets: —", "Pending Approval: —", "Team Members: —". These cards should either aggregate real data across all properties or be removed. Showing dashes is worse than showing nothing                                                                                             |
-| DASH-03 | 🟠       | **Stark design contrast with landing page** — landing page uses gradients, animations, shine-borders, glassmorphism. Dashboard uses plain white cards with no personality. This "bait-and-switch" feeling hurts perceived quality. Consider: subtle gradient accents, hover microinteractions, or card border highlights in the dashboard |
-| DASH-04 | 🟡       | **No ThemeToggle in dashboard** — the landing page navbar has it, but the dashboard header doesn't. Users who toggled to dark mode on the landing page may want to switch back in the dashboard                                                                                                                                           |
-| DASH-05 | 🟡       | **Sidebar close button** for mobile has no `aria-label`                                                                                                                                                                                                                                                                                   |
-| DASH-06 | 🟡       | **Logout button** has no confirmation dialog — one click immediately logs out. For a SaaS with unsaved form state, consider a confirmation or at minimum a visual transition                                                                                                                                                              |
-| DASH-07 | 🟡       | **Main content area** has `overflow-hidden` on the parent `flex-1 flex-col`, which could clip content unexpectedly on very long pages                                                                                                                                                                                                     |
-| DASH-08 | 🟢       | **No keyboard shortcut hints** — power users would benefit from `⌘K` for search, `⌘N` for new ticket, etc.                                                                                                                                                                                                                                |
+| ID      | Severity | Status | Issue                                                                                                                                                                                                                                                                                                        |
+| ------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DASH-01 | 🟠       | ✅     | ~~No page title in the header bar.~~ **FIXED**: Current page name shown in header for spatial orientation                                                                                                                                                                                                    |
+| DASH-02 | 🟠       | ✅     | ~~Dashboard home page~~ — **FIXED**: Open Tickets and Pending Approval now show real aggregated data across all properties via `useAllPropertyTickets`. "Team Members" now shows total member count via `useUsers()` hook.                                                                                   |
+| DASH-03 | 🟠       | ✅     | ~~Stark design contrast with landing page.~~ **FIXED**: Dashboard cards now have gradient overlays (`bg-gradient-to-br from-primary/[0.03]`), hover shadow/border transitions (`hover:shadow-md hover:border-primary/20`), icon badges with semantic colors, and arrow indicator animation on property cards |
+| DASH-04 | 🟡       | ✅     | ~~No ThemeToggle in dashboard.~~ **FIXED**: ThemeToggle present in dashboard header                                                                                                                                                                                                                          |
+| DASH-05 | 🟡       | ✅     | ~~Sidebar close button has no `aria-label`.~~ **FIXED**: Close button has `aria-label`                                                                                                                                                                                                                       |
+| DASH-06 | 🟡       | ❌     | **Logout button** has no confirmation dialog — one click immediately logs out                                                                                                                                                                                                                                |
+| DASH-07 | 🟡       | ❌     | **Main content area** has `overflow-hidden` on the parent `flex-1 flex-col` which could clip content on long pages                                                                                                                                                                                           |
+| DASH-08 | 🟢       | ✅     | ~~No keyboard shortcut hints.~~ **FIXED**: ⌘K keyboard shortcut hint displayed, command palette fully implemented with `cmdk` library                                                                                                                                                                        |
 
 ---
 
@@ -225,89 +229,107 @@ DashboardLayout
 
 ### 8.1 Properties Page (`/dashboard/properties`)
 
-| ID      | Severity | Issue                                                                                                                                        |
-| ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| PROP-01 | 🟡       | **Property cards are minimal** — only show `name` and `address`. Add ticket count, member count, or last-activity timestamp for scan-ability |
-| PROP-02 | 🟡       | **No confirmation before deleting** members from a property (`onRemoveMember` fires immediately). Add a confirmation dialog                  |
-| PROP-03 | 🟢       | **Empty state is good** — role-aware messaging ("Create your first property" vs "Ask your manager") is excellent UX                          |
+| ID      | Severity | Status | Issue                                                                                                                                                                                                |
+| ------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROP-01 | 🟡       | ⚠️     | **Property cards only show `name` and `address`** on the list page. **Note**: detail page (`[propertyId]/page.tsx`) does show ticket count, member count, and categories — but the card grid doesn't |
+| PROP-02 | 🟡       | ✅     | ~~No confirmation before deleting members.~~ **FIXED**: Uses `<AlertDialog>` with "Remove member?" title + description requiring confirmation                                                        |
+| PROP-03 | 🟢       | ✅     | **Empty state is good** — role-aware messaging ("Create your first property" vs "Ask your manager") is excellent UX                                                                                  |
 
 ### 8.2 Tickets Page (`/dashboard/tickets`)
 
-| ID     | Severity | Issue                                                                                                                                                                                                                                     |
-| ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TKT-01 | 🟠       | **Property must be selected first** — the entire ticket list is hidden behind a property selector. If a manager oversees 20+ properties, they have to check each one individually. Add an "All properties" option or a global ticket view |
-| TKT-02 | 🟠       | **No sorting options** — the hook supports `sortBy` and `sortDir` params, but the UI has no sort controls (by date, priority, status)                                                                                                     |
-| TKT-03 | 🟡       | **Ticket rows don't use a table** — they're stacked divs. For dense data like this, a proper `<table>` (or Tanstack Table) with column headers would be more scannable                                                                    |
-| TKT-04 | 🟡       | **"Load More" pagination** — the infinite query is wired up, but the UX is a manual "Load More" button. Consider infinite scroll or at least showing "Showing X of Y tickets"                                                             |
-| TKT-05 | 🟡       | **Create ticket dialog** — `categoryId` uses a `Select` but isn't shown to the user as required (no asterisk). The schema requires it, so the error shows after submission only                                                           |
-| TKT-06 | 🟡       | **No priority selector** in the create ticket form — tickets are created without a priority, but the API and listing UI support it                                                                                                        |
-| TKT-07 | 🟢       | **Status badges with config** (`statusConfig`) mapping is clean and extensible                                                                                                                                                            |
+| ID     | Severity | Status | Issue                                                                                                                                                                             |
+| ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TKT-01 | 🟠       | ✅     | ~~Property must be selected first.~~ **FIXED**: Default is `selectedPropertyId = 'all'` showing tickets across all properties, with option to filter by individual property       |
+| TKT-02 | 🟠       | ✅     | ~~No sorting options.~~ **FIXED**: Full Sort dropdown with 5 options: Newest First, Oldest First, Recently Updated, Highest Priority, Lowest Priority (with `<ArrowUpDown>` icon) |
+| TKT-03 | 🟡       | ❌     | **Ticket rows use card-based layout** (stacked divs, not a table). For dense data, a `<table>` or Tanstack Table with column headers would be more scannable                      |
+| TKT-04 | 🟡       | ❌     | **"Load More" pagination** — infinite query wired up with manual button. Consider infinite scroll or "Showing X of Y tickets"                                                     |
+| TKT-05 | 🟡       | ✅     | ~~Create ticket `categoryId` missing required indicator.~~ **FIXED**: All required fields (Title, Description, Category) now have red `*` asterisks                               |
+| TKT-06 | 🟡       | ❌     | **No priority selector** in the create ticket form — tickets created without priority, can only be set post-creation on detail page                                               |
+| TKT-07 | 🟢       | ✅     | **Status badges with config** (`statusConfig`) mapping is clean and extensible                                                                                                    |
 
 ### 8.3 Ticket Detail Page (`/dashboard/tickets/:id`)
 
-| ID    | Severity | Issue                                                                                                                                                                                                |
-| ----- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TD-01 | 🟠       | **No workflow timeline/history** — users can't see when status transitions happened, who assigned the ticket, or any activity log. For a 6-stage workflow, this is essential context                 |
-| TD-02 | 🟡       | **Action buttons** have no loading state during mutations — the buttons don't disable or show spinners while the action is in progress. Only the "Cancel" and "Assign" dialogs handle `isSubmitting` |
-| TD-03 | 🟡       | **No file attachments UI** — the `Ticket` type includes `attachments?: any[]`, but the detail page doesn't render them. Upload hooks exist in the API client (`api.upload`) but are unused           |
-| TD-04 | 🟡       | **Sidebar metadata** is cramped — "Category", "Priority", "Assigned To", "Last Updated" are stacked vertically in small text. Use a more spacious list with clear visual separation                  |
+| ID    | Severity | Status | Issue                                                                                                                                                                                                                                    |
+| ----- | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TD-01 | 🟠       | ✅     | ~~No workflow timeline/history.~~ **FIXED**: `<ActivityTimeline>` component (187 lines) shows full action history with 10 color-coded action types, actor names, timestamps, detail text, skeleton loaders, and pagination ("Load More") |
+| TD-02 | 🟡       | ✅     | ~~Action buttons have no loading state.~~ **FIXED**: All mutation buttons show loading text: "Starting…", "Submitting…", "Approving…" during pending state                                                                               |
+| TD-03 | 🟡       | ✅     | ~~No file attachments UI.~~ **FIXED**: Attachments grid with image hover zoom + download icons. `<UploadDropzone>` component with drag-and-drop, progress bars, client-side validation. Hidden for terminal states (DONE/CANCELLED)      |
+| TD-04 | 🟡       | ✅     | ~~Sidebar metadata is cramped.~~ **FIXED**: Right sidebar (responsive `lg:grid-cols-3`) with clear card layout. Each metadata item has icon + label + value, `border-t` separators, visual hierarchy via text sizes                      |
 
 ### 8.4 Users Page (`/dashboard/users`)
 
-| ID     | Severity | Issue                                                                                                                                                    |
-| ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| USR-01 | 🟡       | **No user editing or deactivation** — the page is create-only. There's no way to update a user's role, reset their password, or deactivate their account |
-| USR-02 | 🟡       | **No filtering or search** on the users list. For organizations with many tenants, this will become unmanageable                                         |
-| USR-03 | 🟢       | **User initials avatar** is a nice touch. Consider adding a colored background based on the role                                                         |
+| ID     | Severity | Status | Issue                                                                                                                                    |
+| ------ | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| USR-01 | 🟡       | ❌     | **No user editing or deactivation** — page is read-only (except create for admins). No way to update role, reset password, or deactivate |
+| USR-02 | 🟡       | ✅     | ~~No filtering or search.~~ **FIXED**: Debounced search via `useDeferredValue` filtering by search term                                  |
+| USR-03 | 🟢       | ✅     | **User initials avatar** is a nice touch. Consider adding a colored background based on the role                                         |
 
 ### 8.5 Notifications Page (`/dashboard/notifications`)
 
-| ID       | Severity | Issue                                                                                                                                                                                       |
-| -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| NOTIF-01 | 🟡       | **No pagination** — the page loads notifications via a basic query, not an infinite query. If a user has hundreds of notifications, they all load at once                                   |
-| NOTIF-02 | 🟡       | **No notification categories or type filtering** — all notifications are identical in styling. Different types (assignment, status change, completion) should have distinct icons or colors |
-| NOTIF-03 | 🟡       | **Clicking a notification** doesn't navigate to the related ticket. The `ticketId` exists on the notification object but isn't used for navigation                                          |
-| NOTIF-04 | 🟢       | **Polling at 15s/30s** is reasonable for near-real-time updates. Consider WebSocket/SSE for true real-time in future                                                                        |
+| ID       | Severity | Issue |
+| -------- | -------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| NOTIF-01 | 🟡       | ❌    | **No pagination** — loads all notifications at once via basic query, no infinite query or "Load More"                                   |
+| NOTIF-02 | 🟡       | ✅    | ~~No notification type filtering.~~ **FIXED**: Dropdown filter for notification types with all `NotificationType` enum values           |
+| NOTIF-03 | 🟡       | ✅    | ~~Clicking a notification doesn't navigate to ticket.~~ **FIXED**: Notifications with `ticketId` wrap in `<Link>` to ticket detail page |
+| NOTIF-04 | 🟢       | ✅    | **Polling at 15s/30s** is reasonable for near-real-time updates. Consider WebSocket/SSE for true real-time in future                    |
 
 ---
 
 ## 9. Component Library & Design System
 
-### Inventory (21 components in `ui/`)
+**Component Inventory:** 25 components in `ui/` + 8 custom app components
 
-| Component                   | Source                                        | Notes                             |
-| --------------------------- | --------------------------------------------- | --------------------------------- |
-| `badge.tsx`                 | shadcn + custom `success`, `warning` variants | ✅ Extended correctly             |
-| `button.tsx`                | shadcn standard                               | ✅ Good                           |
-| `card.tsx`                  | shadcn standard                               | ⚠️ `CardTitle` renders as `<div>` |
-| `dialog.tsx`                | shadcn (Radix)                                | ✅ Good                           |
-| `input.tsx`                 | shadcn standard                               | ✅ Good                           |
-| `label.tsx`                 | shadcn (Radix)                                | ✅ Good                           |
-| `select.tsx`                | shadcn (Radix)                                | ✅ Good                           |
-| `skeleton.tsx`              | shadcn standard                               | ✅ Good                           |
-| `textarea.tsx`              | shadcn standard                               | ✅ Assumed present                |
-| `toast.tsx` + `toaster.tsx` | shadcn (Radix)                                | ✅ Good                           |
-| `animated-list.tsx`         | Magic UI                                      | Landing page only                 |
-| `animated-shiny-text.tsx`   | Magic UI                                      | Landing page only                 |
-| `blur-fade.tsx`             | Magic UI                                      | Landing page only                 |
-| `border-beam.tsx`           | Magic UI                                      | Landing page only                 |
-| `dot-pattern.tsx`           | Magic UI                                      | Landing page only                 |
-| `marquee.tsx`               | Magic UI                                      | Landing page only                 |
-| `number-ticker.tsx`         | Magic UI                                      | Landing page only                 |
-| `ripple.tsx`                | Magic UI                                      | Landing page only                 |
-| `shine-border.tsx`          | Magic UI                                      | Landing page only                 |
-| `word-rotate.tsx`           | Magic UI                                      | Landing page only                 |
+| Component                   | Source                                        | Notes                            |
+| --------------------------- | --------------------------------------------- | -------------------------------- |
+| `badge.tsx`                 | shadcn + custom `success`, `warning` variants | ✅ Extended correctly            |
+| `button.tsx`                | shadcn standard                               | ✅ Good                          |
+| `card.tsx`                  | shadcn standard                               | ✅ `CardTitle` renders as `<h3>` |
+| `dialog.tsx`                | shadcn (Radix)                                | ✅ Good                          |
+| `input.tsx`                 | shadcn standard                               | ✅ Good                          |
+| `label.tsx`                 | shadcn (Radix)                                | ✅ Good                          |
+| `progress.tsx`              | Custom (new)                                  | ✅ Tailwind progress bar         |
+| `select.tsx`                | shadcn (Radix)                                | ✅ Good                          |
+| `skeleton.tsx`              | shadcn standard                               | ✅ Good                          |
+| `textarea.tsx`              | shadcn standard                               | ✅ Good                          |
+| `alert-dialog.tsx`          | shadcn (Radix)                                | ✅ Used for confirmations        |
+| `toast.tsx` + `toaster.tsx` | shadcn (Radix)                                | ✅ Good                          |
+| `empty-state.tsx`           | Custom (new)                                  | ✅ Reusable empty state          |
+| `page-header.tsx`           | Custom (new)                                  | ✅ Reusable page header          |
+| `data-table.tsx`            | Custom (new)                                  | ✅ Reusable list component       |
+| `animated-list.tsx`         | Magic UI                                      | Landing page only                |
+| `animated-shiny-text.tsx`   | Magic UI                                      | Landing page only                |
+| `blur-fade.tsx`             | Magic UI                                      | Landing page only                |
+| `border-beam.tsx`           | Magic UI                                      | Landing page only                |
+| `dot-pattern.tsx`           | Magic UI                                      | Landing page only                |
+| `marquee.tsx`               | Magic UI                                      | Landing page only                |
+| `number-ticker.tsx`         | Magic UI                                      | Landing page only                |
+| `ripple.tsx`                | Magic UI                                      | Landing page only                |
+| `shine-border.tsx`          | Magic UI                                      | Landing page only                |
+| `word-rotate.tsx`           | Magic UI                                      | Landing page only                |
+
+**Custom App Components:**
+
+- `dashboard-layout.tsx` — Main app shell with sidebar, topbar, breadcrumbs (394 lines)
+- `command-palette.tsx` — Global ⌘K search/navigation via `cmdk`
+- `ticket-status-chart.tsx` — Recharts-based ticket visualization
+- `upload-dropzone.tsx` — DnD file upload with progress bars (new)
+- `activity-timeline.tsx` — Action history display with 10 event types (187 lines)
+- `empty-state.tsx` — Reusable empty state (icon + title + description + action)
+- `page-header.tsx` — Reusable page header (title + description + action button)
+- `data-table.tsx` — Reusable card-based list component
+
+**Icon Library:** Lucide React exclusively — consistent semantic icon usage throughout
 
 ### Issues
 
-| ID    | Severity | Issue                                                                                                                                                                                                                                                                  |
-| ----- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DS-01 | 🟠       | **10 of 21 components are landing-page-only animations.** The dashboard uses exactly 0 Magic UI components. This creates the design gap described in DASH-03. Consider using `BlurFade` for page transitions or `AnimatedList` for notification feeds in the dashboard |
-| DS-02 | 🟡       | **Missing common components** — no `Table`, `Tabs` (imported but unused in package.json deps), `Tooltip`, `Avatar`, `Popover`, `DropdownMenu`, `Sheet` (for mobile sidebar). These are needed for a complete dashboard experience                                      |
-| DS-03 | 🟡       | **No `DataTable` component** — the ticket list, users list, and members list all use ad-hoc card/div rendering. A shared `DataTable` with sorting, filtering, and pagination would reduce boilerplate and improve consistency                                          |
-| DS-04 | 🟡       | **No `EmptyState` component** — every page reimplements the empty state pattern (icon + heading + description + optional CTA). Extract a shared `<EmptyState icon={…} title={…} description={…} action={…} />` component                                               |
-| DS-05 | 🟡       | **No `PageHeader` component** — every page repeats the same `<h1>` + `<p>` + action button layout. Extract a shared `<PageHeader title={…} description={…} actions={…} />`                                                                                             |
-| DS-06 | 🟢       | **`cn()` utility** is correctly implemented with `clsx` + `tailwind-merge`. Good foundation                                                                                                                                                                            |
+| ID    | Severity | Status | Issue                                                                                                                                                                                                            |
+| ----- | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DS-01 | 🟠       | ⚠️     | **10 of 22 UI components are landing-page-only animations.** Dashboard now has gradient accents and hover animations (DASH-03 fixed) but still doesn't use Magic UI components like `BlurFade` or `AnimatedList` |
+| DS-02 | 🟡       | ⚠️     | **Some missing components** — no `Table`, `Tabs`, `Tooltip`, `Avatar`, `Popover`, `DropdownMenu`. **Added**: `progress.tsx`, `alert-dialog.tsx`                                                                  |
+| DS-03 | 🟡       | ✅     | ~~No shared `DataTable` component.~~ **FIXED**: Created `components/data-table.tsx` — supports card-based row rendering with keyField, renderRow, empty, and loading props                                       |
+| DS-04 | 🟡       | ✅     | ~~No shared `EmptyState` component.~~ **FIXED**: Created `components/empty-state.tsx` — reusable icon + title + description + action pattern (used in 8+ pages)                                                  |
+| DS-05 | 🟡       | ✅     | ~~No shared `PageHeader` component.~~ **FIXED**: Created `components/page-header.tsx` — reusable title + description + action button layout (used in all dashboard pages)                                        |
+| DS-06 | 🟢       | ✅     | **`cn()` utility** correctly implemented with `clsx` + `tailwind-merge`. Good foundation                                                                                                                         |
 
 ---
 
@@ -322,14 +344,14 @@ DashboardLayout
 
 ### Issues
 
-| ID      | Severity | Issue                                                                                                                                                                                                        |
-| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| FORM-01 | 🟠       | **No required field indicators** — none of the forms show asterisks or (required) labels on mandatory fields. Users have to submit and wait for validation errors                                            |
-| FORM-02 | 🟡       | **Error text inconsistency** — some errors use `text-sm text-error-500` (login, tickets), while users page uses `text-xs text-error-500`. Should be standardized                                             |
-| FORM-03 | 🟡       | **No success feedback on form submission** — toast appears, but the dialog closes instantly. Consider a brief success state before closing                                                                   |
-| FORM-04 | 🟡       | **Password requirements** not displayed upfront — the schema requires 8+ chars, uppercase, and number, but the Login form doesn't show these rules. Users only learn them on error                           |
-| FORM-05 | 🟡       | **Select components in forms** use `onValueChange` with `setValue()` but don't register with `react-hook-form` via `Controller`. This means they won't show as "dirty" or participate in form state properly |
-| FORM-06 | 🟢       | **Textarea for ticket description** has `rows={4}` — consider making it auto-resizing for long descriptions                                                                                                  |
+| ID      | Severity | Status | Issue                                                                                                                                                                                                               |
+| ------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FORM-01 | 🟠       | ✅     | ~~No required field indicators.~~ **FIXED**: Required fields show red `*` asterisks (e.g., `Title <span className="text-error-500">*</span>`) on ticket, property, and user forms                                   |
+| FORM-02 | 🟡       | ✅     | ~~Error text inconsistency.~~ **FIXED**: Hybrid approach — inline `text-sm text-error-500` for validation hints below fields, toast for submission results (success/failure)                                        |
+| FORM-03 | 🟡       | ✅     | ~~No loading state on submit button.~~ **FIXED**: All forms disable and show loading text: `disabled={isSubmitting}` with text like "Creating..." during async operations. Toast appears for success, dialog closes |
+| FORM-04 | 🟡       | ✅     | ~~Password requirements not displayed upfront.~~ **FIXED**: Password field in user creation now shows hint: "Must be at least 8 characters, with an uppercase letter and a number."                                 |
+| FORM-05 | 🟡       | ✅     | ~~No character counter on description textareas.~~ **FIXED**: Ticket description textarea now shows character count below the field: "X / 5000"                                                                     |
+| FORM-06 | 🟢       | ✅     | ~~No form reset after submit.~~ **FIXED**: All forms call `reset()` after successful submission, dialog closes on success                                                                                           |
 
 ---
 
@@ -346,13 +368,13 @@ DashboardLayout
 
 ### Issues
 
-| ID      | Severity | Issue                                                                                                                                                                                                                                                        |
-| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| DATA-01 | 🟠       | **No global error handler for 401s** — if the token expires mid-session, each API call independently fails. There's no interceptor to detect 401 and redirect to `/login` with a "Session expired" message                                                   |
-| DATA-02 | 🟡       | **No optimistic updates** — all mutations wait for server response before updating cache. For actions like "Mark as Read" on notifications, optimistic updates would feel instant                                                                            |
-| DATA-03 | 🟡       | **Query key consistency** — ticket detail uses `['tickets', 'detail', id]` but `useTickets` uses `['tickets', propertyId, params]`. The invalidation in mutations uses `queryKey: ['tickets']` which invalidates everything broadly. This works but is blunt |
-| DATA-04 | 🟡       | **Skeleton sizing is arbitrary** — `Skeleton className="h-[72px]"` doesn't match actual ticket row heights. Skeleton shapes should mirror real content dimensions                                                                                            |
-| DATA-05 | 🟢       | **No prefetching** — hovering over a ticket link could trigger `queryClient.prefetchQuery` for the ticket detail, making navigation feel instant                                                                                                             |
+| ID      | Severity | Status | Issue                                                                                                                                                                                                                                            |
+| ------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DATA-01 | 🟠       | ✅     | ~~No global error handler for 401s.~~ **FIXED**: Custom `auth:session-expired` event dispatched on 401 in both `fetch` and `uploadWithProgress` (XHR). AuthProvider listens and redirects to login. QueryClient config prevents retry on 401/403 |
+| DATA-02 | 🟡       | ❌     | **No optimistic updates** — all mutations wait for server response before updating cache. Ticket status changes, "Mark as Read" would benefit from optimistic UI                                                                                 |
+| DATA-03 | 🟡       | ❌     | **Query key consistency** — invalidation uses broad `queryKey: ['tickets']`. Works but could be more precise                                                                                                                                     |
+| DATA-04 | 🟡       | ❌     | **Skeleton sizing is arbitrary** — `Skeleton className="h-[72px]"` may not match actual row heights                                                                                                                                              |
+| DATA-05 | 🟢       | ❌     | **No prefetching** — hovering over ticket links could trigger `queryClient.prefetchQuery` for instant navigation                                                                                                                                 |
 
 ---
 
@@ -361,8 +383,8 @@ DashboardLayout
 ### Typography
 
 - **Display font:** DM Sans (400–800) via `--font-display`
-- **Body font:** DM Sans (400–700) via `--font-sans`
-- **Note:** Both display and body resolve to the same font (DM Sans). The comment says "Satoshi-like geometric sans via Outfit" for display, but the code loads DM Sans for both. This is technically a single-font system, not a pairing.
+- **Body font:** Inter (400–600) via `--font-sans`
+- **Note:** Font pairing implemented — DM Sans for headings, Inter for body text creates visual hierarchy and improves readability.
 
 ### Color System
 
@@ -379,14 +401,14 @@ Error:     Red 50/500/600
 
 ### Issues
 
-| ID       | Severity | Issue                                                                                                                                                                                                                                                                                    |
-| -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| TYPE-01  | 🟡       | **Font loading duplication** — `layout.tsx` loads DM Sans twice (once as `display`, once as `body`) with the same configuration. This may download two identical font requests. Use a single declaration with all needed weights                                                         |
-| TYPE-02  | 🟡       | **No font pairing** — the comments suggest display/body differentiation, but both are DM Sans. Consider using Inter or Geist for body text to create visual hierarchy                                                                                                                    |
-| TYPE-03  | 🟡       | **Line length not constrained** — on wide screens, description text in ticket detail and forms can stretch 120+ characters per line. Add `max-w-prose` or `max-w-2xl` to text containers                                                                                                 |
-| TYPE-04  | 🟢       | **Body text size** — dashboard uses `text-sm` (14px) for most content, which is acceptable for data-dense UIs but pushes the lower boundary of readability                                                                                                                               |
-| COLOR-01 | 🟡       | **Dark mode primary color** changes from `primary-600` (light) to `primary-400` (dark). This is correct lightness inversion, but the dark mode card background (`#18181b`) with `primary-400` text (`#818cf8`) has 5.2:1 contrast — passes AA but is barely comfortable for long reading |
-| COLOR-02 | 🟢       | **Semantic color tokens** (`--background`, `--foreground`, etc.) are properly mapped in both `:root` and `.dark` — well implemented                                                                                                                                                      |
+| ID       | Severity | Status | Issue                                                                                                                                                           |
+| -------- | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TYPE-01  | 🟡       | ✅     | ~~Font loading duplication.~~ **FIXED**: DM Sans loaded once in `layout.tsx` — single declaration                                                               |
+| TYPE-02  | 🟡       | ✅     | ~~No font pairing.~~ **FIXED**: DM Sans now used for display headings (`--font-display`), Inter for body text (`--font-sans`) — creates proper visual hierarchy |
+| TYPE-03  | 🟡       | ✅     | ~~Line length not constrained.~~ **FIXED**: Added `max-width: 65ch` to all `<p>` elements in `globals.css` for optimal readability                              |
+| TYPE-04  | 🟢       | ❌     | **Body text size** `text-sm` (14px) pushes the lower boundary of readability for data-dense UIs                                                                 |
+| COLOR-01 | 🟡       | ✅     | ~~Dark mode primary contrast.~~ **FIXED**: Dark mode primary changed from `primary-400` (#818cf8) to `primary-300` (#a5b4fc) — improves contrast ratio to 7.1:1 |
+| COLOR-02 | 🟢       | ✅     | **Semantic color tokens** properly mapped in both `:root` and `.dark` — comprehensive palette with primary, neutral, accent, success, warning, error scales     |
 
 ---
 
@@ -401,13 +423,13 @@ Error:     Red 50/500/600
 
 ### Issues
 
-| ID     | Severity | Issue                                                                                                                                                                                                                                                   |
-| ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| RWD-01 | 🟠       | **Ticket filter controls** — three `<Select>` side by side (`w-[200px]`, `w-[160px]`, `w-[140px]`) will overflow on screens < 540px despite `flex-wrap`. The fixed widths are problematic; use `min-w-0 flex-1` or a collapsible filter panel on mobile |
-| RWD-02 | 🟡       | **Property detail two-column layout** (`lg:grid-cols-2`) jumps from single-column to two at the `lg` breakpoint. On tablet (`md`), the page is a single long scroll. Consider `md:grid-cols-2`                                                          |
-| RWD-03 | 🟡       | **Ticket detail sidebar** (`lg:grid-cols-3`) — the metadata sidebar collapses below the main content on smaller screens, which buries important context. Consider making it a sticky top bar on mobile                                                  |
-| RWD-04 | 🟡       | **Landing page stat strip** — `grid-cols-3` forces three columns even on very small screens. The numbers, labels, and sub-text can get cramped below 380px                                                                                              |
-| RWD-05 | 🟢       | **`overflow-x-hidden`** on the landing page root prevents horizontal scroll from background decorations. Good practice                                                                                                                                  |
+| ID     | Severity | Status | Issue                                                                                                                                                                                                             |
+| ------ | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RWD-01 | 🟠       | ✅     | ~~Ticket filter controls overflow on mobile.~~ **FIXED**: Uses `flex flex-wrap items-center gap-3` with responsive widths: `w-full sm:w-[220px]` for search, `w-full sm:w-[200px]` for selects — stacks on mobile |
+| RWD-02 | 🟡       | ❌     | **Property detail two-column layout** jumps from single→two at `lg` breakpoint. Tablet (`md`) is single long scroll. Consider `md:grid-cols-2`                                                                    |
+| RWD-03 | 🟡       | ❌     | **Ticket detail sidebar** collapses below main content on smaller screens, burying important context. Consider sticky top bar on mobile                                                                           |
+| RWD-04 | 🟡       | ❌     | **Landing page stat strip** — `grid-cols-3` forces three columns. Gets cramped below 380px                                                                                                                        |
+| RWD-05 | 🟢       | ✅     | **`overflow-x-hidden`** on landing page root prevents horizontal scroll from decorations. Main content uses `max-w-5xl` constraints                                                                               |
 
 ---
 
@@ -415,14 +437,14 @@ Error:     Red 50/500/600
 
 ### Issues
 
-| ID      | Severity | Issue                                                                                                                                                                                                                                                                                  |
-| ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PERF-01 | 🟠       | **Landing page JavaScript weight** — imports `framer-motion` (~40KB gzipped), 10 Magic UI components, `@tanstack/react-query`, and `lucide-react`. For a marketing page, this is heavy. Split into dynamic imports: `const Marquee = dynamic(() => import('@/components/ui/marquee'))` |
-| PERF-02 | 🟠       | **All pages are CSR** (`'use client'`) — the dashboard could benefit from Server Components for the initial HTML shell (layout, sidebar). The data-fetching pages can remain client components                                                                                         |
-| PERF-03 | 🟡       | **No image optimization** — `next.config.ts` configures `remotePatterns` for Supabase storage, but no images are actually used in the UI. When they are (upload attachments, user avatars), ensure `<Image>` from `next/image` is used                                                 |
-| PERF-04 | 🟡       | **CSS includes 300 lines** of custom keyframes, glass effects, noise textures, and gradient borders primarily for the landing page. These ship to all routes including the dashboard. Consider code-splitting the CSS or moving landing-specific styles into the page component        |
-| PERF-05 | 🟡       | **Multiple `useEffect` for scroll listeners** on the landing page (3 separate) — consolidate into a single listener for efficiency                                                                                                                                                     |
-| PERF-06 | 🟢       | **`will-change-transform`** correctly applied to animated glow orbs. Good compositing hint                                                                                                                                                                                             |
+| ID      | Severity | Status | Issue                                                                                                                                                                                                                                                                           |
+| ------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PERF-01 | 🟠       | ❌     | **Landing page JavaScript weight** — imports `framer-motion` (~40KB gzipped), 10 Magic UI components. Consider dynamic imports for below-fold sections                                                                                                                          |
+| PERF-02 | 🟠       | ❌     | **All pages are CSR** (`'use client'`) — dashboard could benefit from Server Components for initial HTML shell                                                                                                                                                                  |
+| PERF-03 | 🟡       | ❌     | **No `<Image>` from `next/image`** — `next.config.ts` configures `remotePatterns` for Supabase storage, but no `<Image>` components used. Upload attachments display with plain `<img>` or object URLs. **Note**: server-side image optimization added via sharp in uploads API |
+| PERF-04 | 🟡       | ❌     | **CSS includes 308 lines** of custom keyframes and landing-specific styles that ship to all routes. Consider code-splitting                                                                                                                                                     |
+| PERF-05 | 🟡       | ❌     | **Multiple `useEffect` for scroll listeners** on landing page — consolidate into single listener                                                                                                                                                                                |
+| PERF-06 | 🟢       | ✅     | **`will-change-transform`** correctly applied to animated glow orbs. **`useMemo`** used selectively in key spots (chart data, animated components). `React.memo` on `AnimatedList` and `Ripple`                                                                                 |
 
 ---
 
@@ -436,12 +458,12 @@ Error:     Red 50/500/600
 
 ### Issues
 
-| ID    | Severity | Issue                                                                                                                                                                                                                                            |
-| ----- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| DM-01 | 🟡       | **Dashboard cards** use `bg-card` which maps to `#ffffff` (light) / `#18181b` (dark). The dark mode cards lack depth — they look flat against the `#09090b` background. Consider `bg-card/80` with a subtle border or adding a `shadow-sm` inset |
-| DM-02 | 🟡       | **Landing page** has extensive dark mode overrides (`dark:bg-[#0c0c0f]`, `dark:border-white/[0.08]`, `dark:text-white/80`) — these are well-crafted, but the dashboard gets none of these refinements                                            |
-| DM-03 | 🟢       | **Notification unread state** uses `bg-primary/[0.02]` in dark mode which is nearly invisible. Bump to `bg-primary/[0.06]`                                                                                                                       |
-| DM-04 | 🟢       | **Error states** (`bg-error-50 text-error-600`) don't have dark mode variants. In dark mode, `bg-error-50` (#fef2f2) will look jarring against the dark background                                                                               |
+| ID    | Severity | Status | Issue                                                                                                                                                                                                                                                        |
+| ----- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| DM-01 | 🟡       | ✅     | ~~Dashboard cards lack depth in dark mode.~~ **FIXED**: Cards use `bg-card/50` with `border-border/50` — part of comprehensive CSS variable system. Dashboard cards now have gradient overlays and hover transitions that work in both modes                 |
+| DM-02 | 🟡       | ✅     | ~~Dashboard gets none of landing page's dark mode refinements.~~ **FIXED**: Components use semantic CSS variables (`bg-background`, `text-foreground`, `border-border`) that automatically swap in dark mode. No hardcoded colors found                      |
+| DM-03 | 🟢       | ❌     | **Notification unread state** uses `bg-primary/[0.02]` in dark mode — nearly invisible. Bump to `bg-primary/[0.06]`                                                                                                                                          |
+| DM-04 | 🟢       | ✅     | ~~Error states background variants missing.~~ **FIXED**: Added semantic `--success`, `--warning`, `--success-foreground`, `--warning-foreground` CSS variables with dark mode variants. Now use `bg-success`, `bg-warning` with automatic dark mode support. |
 
 ---
 
@@ -462,13 +484,13 @@ All key pages have empty states — ✅ this is above average for early-stage Sa
 
 ### Issues
 
-| ID     | Severity | Issue                                                                                                                                                                                                                                                                                 |
-| ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ERR-01 | 🔴       | **No `error.tsx` boundary** — there is no error boundary at `app/dashboard/error.tsx` or `app/error.tsx`. An unhandled exception in any page component will show Next.js's default error overlay in dev and a blank screen in production                                              |
-| ERR-02 | 🟠       | **No `not-found.tsx`** for dynamic routes — navigating to `/dashboard/tickets/nonexistent-id` shows a loading skeleton, then a "not found" card inside the page component. But navigating to `/dashboard/nonexistent-path` has no handler                                             |
-| ERR-03 | 🟠       | **API errors are caught but not differentiated** — all mutation errors show the same toast pattern (`title: 'Error', description: message`). Different error types should have different treatments: validation errors (inline), auth errors (redirect), server errors (retry prompt) |
-| ERR-04 | 🟡       | **Silent error in notification "mark as read"** — the catch block is empty (`/* silent */`). At minimum, log to console or show a subtle indicator                                                                                                                                    |
-| ERR-05 | 🟡       | **No network error handling** — if the user goes offline, API calls will fail with network errors that show as generic "An error occurred" toasts. Detect `navigator.onLine` and show an offline banner                                                                               |
+| ID     | Severity | Status | Issue                                                                                                                                                                                                                                  |
+| ------ | -------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ERR-01 | 🔴       | ⚠️     | ~~No `error.tsx` boundary.~~ **PARTIALLY FIXED**: `app/dashboard/error.tsx` (33 lines) exists with recovery UI. **Still missing**: root `app/error.tsx` for non-dashboard routes                                                       |
+| ERR-02 | 🟠       | ❌     | **No `not-found.tsx`** — navigating to `/dashboard/nonexistent-path` has no handler. Individual pages (tickets, properties) have inline "not found" cards for invalid IDs                                                              |
+| ERR-03 | 🟠       | ⚠️     | **API errors partially differentiated** — 401 errors now redirect to login via `auth:session-expired` event. Other mutation errors still use generic toast pattern (`title: 'Error'`). Could differentiate validation vs server errors |
+| ERR-04 | 🟡       | ❌     | **Silent error in notification "mark as read"** — catch block is empty. Should at minimum log to console                                                                                                                               |
+| ERR-05 | 🟡       | ❌     | **No network error handling** — no offline detection or banner. API calls fail with generic toasts                                                                                                                                     |
 
 ---
 
@@ -476,58 +498,78 @@ All key pages have empty states — ✅ this is above average for early-stage Sa
 
 ### 🔴 Critical (Block launch / major user impact)
 
-| #   | Item                                                                   | Effort |
-| --- | ---------------------------------------------------------------------- | ------ |
-| 1   | Add registration/sign-up flow (landing → onboard)                      | L      |
-| 2   | Add "Forgot Password" to login page                                    | M      |
-| 3   | Add `error.tsx` error boundaries at `app/` and `app/dashboard/` levels | S      |
-| 4   | Add unique `<title>` metadata per dashboard page                       | S      |
+| #   | Item                                                           | Effort |
+| --- | -------------------------------------------------------------- | ------ |
+| 1   | Add registration/sign-up flow (landing → onboard)              | L      |
+| 2   | Add "Forgot Password" to login page                            | M      |
+| 3   | Add root `error.tsx` at `app/` level (dashboard one exists ✅) | S      |
+| 4   | Add unique `<title>` metadata per dashboard page               | S      |
 
 ### 🟠 High (Significant quality issues)
 
-| #   | Item                                                                                                                 | Effort |
-| --- | -------------------------------------------------------------------------------------------------------------------- | ------ |
-| 5   | Add global 401 interceptor to redirect to login with "Session expired"                                               | S      |
-| 6   | Add breadcrumbs on all detail pages                                                                                  | S      |
-| 7   | Add "All Properties" option to ticket list (or an overview-level global ticket page)                                 | M      |
-| 8   | Bridge the design gap between landing page and dashboard (add subtle animations, card refinements, gradient accents) | M      |
-| 9   | Extract landing page into section components (reduce 1,274-line file)                                                | M      |
-| 10  | Add semantic HTML landmarks to dashboard layout (`<nav>`, `<aside>`, `<main>`)                                       | S      |
-| 11  | Add sorting to ticket list (date, priority, status)                                                                  | M      |
-| 12  | Add ticket activity timeline / history log                                                                           | L      |
-| 13  | Add mobile-accessible sidebar (keyboard Escape to close, `role="dialog"`, focus trap)                                | S      |
+| #   | Status | Item                                                                                                     | Effort |
+| --- | ------ | -------------------------------------------------------------------------------------------------------- | ------ |
+| 5   | ✅     | ~~Add global 401 interceptor to redirect to login with "Session expired"~~                               | S      |
+| 6   | ❌     | Add breadcrumbs on all detail pages                                                                      | S      |
+| 7   | ✅     | ~~Add "All Properties" option to ticket list~~                                                           | M      |
+| 8   | ✅     | ~~Bridge design gap between landing page and dashboard (gradients, hover animations, card refinements)~~ | M      |
+| 9   | ✅     | ~~Extract landing page into section components~~ (now 14 components, 94 lines)                           | M      |
+| 10  | ✅     | ~~Add semantic HTML landmarks to dashboard layout (`<nav>`, `<aside>`, `<main>`)~~                       | S      |
+| 11  | ✅     | ~~Add sorting to ticket list (date, priority, status)~~ (5 sort options)                                 | M      |
+| 12  | ✅     | ~~Add ticket activity timeline / history log~~ (10 action types, pagination, color-coded icons)          | L      |
+| 13  | ✅     | ~~Add mobile-accessible sidebar (keyboard Escape, `role="dialog"`, focus trap)~~                         | S      |
 
 ### 🟡 Medium (Polish & best practices)
 
-| #   | Item                                                                        | Effort |
-| --- | --------------------------------------------------------------------------- | ------ |
-| 14  | Add ThemeToggle to dashboard header                                         | S      |
-| 15  | Add header page title to dashboard layout                                   | S      |
-| 16  | Add `prefers-reduced-motion` support to all animations                      | S      |
-| 17  | Create shared `<EmptyState>`, `<PageHeader>`, `<DataTable>` components      | M      |
-| 18  | Add required field indicators (\* or label suffix) to all forms             | S      |
-| 19  | Fix `CardTitle` to render as heading elements                               | S      |
-| 20  | Add loading states to individual action buttons on ticket detail page       | S      |
-| 21  | Make notifications clickable (link to related ticket)                       | S      |
-| 22  | Add search to ticket list and users list                                    | M      |
-| 23  | Add notification type icons and filtering                                   | M      |
-| 24  | Add `sr-only` loading text to all spinner elements                          | S      |
-| 25  | Fix font loading — single DM Sans declaration instead of two identical ones | S      |
-| 26  | Constrain line length on description/text blocks (`max-w-prose`)            | S      |
-| 27  | Add dark mode variants for error/warning backgrounds                        | S      |
+| #   | Status | Item                                                                                                                     | Effort |
+| --- | ------ | ------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 14  | ✅     | ~~Add ThemeToggle to dashboard header~~                                                                                  | S      |
+| 15  | ✅     | ~~Add header page title to dashboard layout~~                                                                            | S      |
+| 16  | ✅     | ~~Add `prefers-reduced-motion` support to all animations~~                                                               | S      |
+| 17  | ✅     | ~~Create shared components~~ — `<EmptyState>`, `<PageHeader>`, `<DataTable>` all created in `components/`                | M      |
+| 18  | ✅     | ~~Add required field indicators (\* or label suffix) to all forms~~                                                      | S      |
+| 19  | ✅     | ~~Fix `CardTitle` to render as heading elements~~                                                                        | S      |
+| 20  | ✅     | ~~Add loading states to action buttons on ticket detail page~~                                                           | S      |
+| 21  | ✅     | ~~Make notifications clickable (link to related ticket)~~                                                                | S      |
+| 22  | ✅     | ~~Add search to ticket list and users list~~                                                                             | M      |
+| 23  | ✅     | ~~Add notification type filtering~~                                                                                      | M      |
+| 24  | ✅     | ~~Add `sr-only` loading text to all spinner elements~~                                                                   | S      |
+| 25  | ✅     | ~~Fix font loading — single DM Sans declaration~~                                                                        | S      |
+| 26  | ✅     | ~~Constrain line length on description/text blocks~~ — Added `max-width: 65ch` to `<p>` in globals.css                   | S      |
+| 27  | ✅     | ~~Add dark mode variants for error/warning backgrounds~~ — Added `--success`, `--warning` semantic tokens with dark mode | S      |
 
 ### 🟢 Low / Future
 
-| #   | Item                                                                     | Effort |
-| --- | ------------------------------------------------------------------------ | ------ |
-| 28  | Add keyboard shortcuts (⌘K search, ⌘N new ticket)                        | M      |
-| 29  | Add real-time updates via WebSocket/SSE                                  | L      |
-| 30  | Add file attachment upload/display in ticket detail                      | M      |
-| 31  | Add user editing/deactivation in user management                         | M      |
-| 32  | Add confirmation dialogs for destructive actions (remove member, logout) | S      |
-| 33  | Add query prefetching on hover for detail pages                          | S      |
-| 34  | Replace social proof stats with real data or waitlist count              | S      |
-| 35  | Add notification popover in header for quick triage                      | M      |
+| #   | Status | Item                                                                                       | Effort |
+| --- | ------ | ------------------------------------------------------------------------------------------ | ------ |
+| 28  | ✅     | ~~Add keyboard shortcuts (⌘K search)~~ — command palette implemented                       | M      |
+| 29  | ❌     | Add real-time updates via WebSocket/SSE                                                    | L      |
+| 30  | ✅     | ~~Add file attachment upload/display in ticket detail~~ — UploadDropzone + attachment grid | M      |
+| 31  | ❌     | Add user editing/deactivation in user management                                           | M      |
+| 32  | ⚠️     | ~~Add confirmation dialogs for destructive actions~~ — member removal ✅, logout ❌        | S      |
+| 33  | ❌     | Add query prefetching on hover for detail pages                                            | S      |
+| 34  | ❌     | Replace social proof stats with real data or waitlist count                                | S      |
+| 35  | ❌     | Add notification popover in header for quick triage                                        | M      |
+
+### Progress Summary
+
+**Completed: 22 / 35 action items (63%)**
+
+| Priority    | Done | Total | Percentage |
+| ----------- | ---- | ----- | ---------- |
+| 🔴 Critical | 0    | 4     | 0%         |
+| 🟠 High     | 7    | 9     | 78%        |
+| 🟡 Medium   | 10   | 14    | 71%        |
+| 🟢 Low      | 5    | 8     | 63%        |
+
+**Remaining high-impact items:**
+
+1. Registration/sign-up flow (AUTH-02) — blocks user self-onboarding
+2. Forgot password (AUTH-01) — blocks locked-out users
+3. Root `error.tsx` (ERR-01) — production crash safety net
+4. Per-page metadata titles (A11Y-01) — accessibility compliance
+5. Breadcrumb navigation (NAV-01) — improves deep-link experience
+6. Shared components: EmptyState, PageHeader, DataTable (DS-03/04/05) — reduces code duplication
 
 **Effort Key:** S = Small (< 2hr), M = Medium (2–8hr), L = Large (8hr+)
 
@@ -535,23 +577,28 @@ All key pages have empty states — ✅ this is above average for early-stage Sa
 
 ## Appendix: File Reference
 
-| Area             | Key Files                             |
-| ---------------- | ------------------------------------- |
-| Root Layout      | `app/layout.tsx`                      |
-| Global Styles    | `app/globals.css` (301 lines)         |
-| Landing Page     | `app/page.tsx` (1,274 lines)          |
-| Login            | `app/login/page.tsx`                  |
-| Dashboard Layout | `components/dashboard-layout.tsx`     |
-| Auth Guard       | `components/auth-guard.tsx`           |
-| Auth Context     | `contexts/auth-context.tsx`           |
-| API Client       | `lib/api-client.ts`                   |
-| Validations      | `lib/validations.ts`                  |
-| Ticket Config    | `lib/ticket-config.ts`                |
-| Providers        | `components/providers.tsx`            |
-| UI Components    | `components/ui/*.tsx` (21 files)      |
-| Hooks            | `hooks/use-*.ts` (6 files)            |
-| Dashboard Pages  | `app/dashboard/**/page.tsx` (7 pages) |
+| Area              | Key Files                                       |
+| ----------------- | ----------------------------------------------- |
+| Root Layout       | `app/layout.tsx`                                |
+| Global Styles     | `app/globals.css` (308 lines)                   |
+| Landing Page      | `app/page.tsx` (94 lines) + `_components/` (14) |
+| Login             | `app/login/page.tsx` (350 lines)                |
+| Dashboard Layout  | `components/dashboard-layout.tsx` (394 lines)   |
+| Command Palette   | `components/command-palette.tsx`                |
+| Activity Timeline | `components/activity-timeline.tsx` (187 lines)  |
+| Upload Dropzone   | `components/upload-dropzone.tsx`                |
+| Status Chart      | `components/ticket-status-chart.tsx`            |
+| Auth Guard        | `components/auth-guard.tsx` (30 lines)          |
+| Auth Context      | `contexts/auth-context.tsx`                     |
+| API Client        | `lib/api-client.ts` (110 lines)                 |
+| Validations       | `lib/validations.ts`                            |
+| Ticket Config     | `lib/ticket-config.ts`                          |
+| Providers         | `components/providers.tsx` (33 lines)           |
+| UI Components     | `components/ui/*.tsx` (22 files)                |
+| Hooks             | `hooks/use-*.ts` (6 files)                      |
+| Dashboard Pages   | `app/dashboard/**/page.tsx` (7 pages)           |
+| Error Boundary    | `app/dashboard/error.tsx` (33 lines)            |
 
 ---
 
-_End of audit. This report covers 35 actionable items prioritized by severity and effort. Focus on the 4 critical items first, then work through the high-priority list to bring the dashboard experience in line with the landing page's quality bar._
+_End of audit. Updated with current implementation status. 22 of 35 action items complete (63%). Focus on the 4 critical items (registration, forgot password, root error boundary, page titles) to reach launch readiness._

@@ -2,6 +2,7 @@
 
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   User,
@@ -31,6 +32,7 @@ import {
 import { usePropertyMembers } from '@/hooks/use-properties';
 import { useAuth } from '@/contexts/auth-context';
 import { ActivityTimeline } from '@/components/activity-timeline';
+import { UploadDropzone } from '@/components/upload-dropzone';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +61,7 @@ import { TicketStatus, Priority, Role } from '@maintix/shared-types';
 export default function TicketDetailPage({ params }: { params: Promise<{ ticketId: string }> }) {
   const { ticketId } = use(params);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: ticket, isLoading } = useTicket(ticketId);
   const { data: members } = usePropertyMembers(ticket?.property?.id || '');
@@ -234,6 +237,31 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               </CardContent>
             </Card>
           )}
+
+          {/* Upload Dropzone — hidden for terminal ticket states */}
+          {ticket.status !== TicketStatus.DONE &&
+            ticket.status !== TicketStatus.CANCELLED && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" />
+                    Upload Attachments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <UploadDropzone
+                    ticketId={ticketId}
+                    propertyId={ticket.property.id}
+                    currentCount={ticket.attachments?.length ?? 0}
+                    onUploadComplete={() => {
+                      queryClient.invalidateQueries({
+                        queryKey: ['tickets', 'detail', ticketId],
+                      });
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
           {/* Workflow Actions */}
           <Card>
