@@ -62,7 +62,7 @@ export default function PropertyDetailPage({
   const { data: members } = usePropertyMembers(propertyId);
   const { data: categories } = useCategories(propertyId);
   const { data: ticketsData } = useTickets(propertyId);
-  const { data: allUsers } = useUsers();
+  const { data: allUsers } = useUsers(undefined, user?.role === Role.MANAGER);
   const addMember = useAddMember(propertyId);
   const removeMember = useRemoveMember(propertyId);
   const createCategory = useCreateCategory(propertyId);

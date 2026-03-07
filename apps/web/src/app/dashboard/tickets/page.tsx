@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useDeferredValue } from 'react';
+import { useAuth } from '@/contexts/auth-context';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,12 +44,18 @@ import { statusConfig } from '@/lib/ticket-config';
 import { TicketStatus, Priority } from '@maintix/shared-types';
 
 export default function TicketsPage() {
+  const { user } = useAuth();
+  console.log('[DEBUG] User:', user);
+  console.log('[DEBUG] User role:', user?.role, 'Type:', typeof user?.role);
   const searchParams = useSearchParams();
   const initialPropertyId = searchParams.get('propertyId') || '';
+  console.log('[DEBUG] initialPropertyId from URL:', initialPropertyId);
   const { data: properties } = useProperties();
+  console.log('[DEBUG] Properties:', properties);
   const { toast } = useToast();
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId || 'all');
+  console.log('[DEBUG] selectedPropertyId state:', selectedPropertyId);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('createdAt');
@@ -58,6 +65,7 @@ export default function TicketsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const isAllProperties = selectedPropertyId === 'all';
+  console.log('[DEBUG] isAllProperties:', isAllProperties);
   const allPropertyIds = properties?.map((p) => p.id) ?? [];
 
   const queryParams: TicketQueryParams = {};
@@ -118,12 +126,23 @@ export default function TicketsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
           <p className="text-muted-foreground">Maintenance requests across your properties.</p>
         </div>
-        {selectedPropertyId && !isAllProperties && (
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Ticket
-          </Button>
-        )}
+        {(() => {
+          const showButton = user?.role === 'TENANT' && selectedPropertyId && !isAllProperties;
+          console.log('[DEBUG] Button condition:', {
+            roleCheck: user?.role === 'TENANT',
+            hasPropertyId: !!selectedPropertyId,
+            notAllProperties: !isAllProperties,
+            finalResult: showButton,
+          });
+          return (
+            showButton && (
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Ticket
+              </Button>
+            )
+          );
+        })()}
       </div>
 
       {/* Filters */}
@@ -269,76 +288,78 @@ export default function TicketsPage() {
       )}
 
       {/* Create Ticket Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Ticket</DialogTitle>
-            <DialogDescription>Submit a new maintenance request.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">
-                Title <span className="text-error-500">*</span>
-              </Label>
-              <Input
-                id="title"
-                placeholder="e.g. Leaking faucet in unit 3B"
-                {...register('title')}
-              />
-              {errors.title && <p className="text-sm text-error-500">{errors.title.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">
-                Description <span className="text-error-500">*</span>
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the issue in detail..."
-                rows={4}
-                {...register('description')}
-              />
-              <div className="flex justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {errors.description && (
-                    <span className="text-error-500">{errors.description.message}</span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {watch('description')?.length ?? 0} / 5000
-                </p>
+      {user?.role === 'TENANT' && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Ticket</DialogTitle>
+              <DialogDescription>Submit a new maintenance request.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">
+                  Title <span className="text-error-500">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="e.g. Leaking faucet in unit 3B"
+                  {...register('title')}
+                />
+                {errors.title && <p className="text-sm text-error-500">{errors.title.message}</p>}
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>
-                Category <span className="text-error-500">*</span>
-              </Label>
-              <Select onValueChange={(val) => setValue('categoryId', val)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.categoryId && (
-                <p className="text-sm text-error-500">{errors.categoryId.message}</p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Ticket'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <div className="space-y-2">
+                <Label htmlFor="description">
+                  Description <span className="text-error-500">*</span>
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the issue in detail..."
+                  rows={4}
+                  {...register('description')}
+                />
+                <div className="flex justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {errors.description && (
+                      <span className="text-error-500">{errors.description.message}</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {watch('description')?.length ?? 0} / 5000
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>
+                  Category <span className="text-error-500">*</span>
+                </Label>
+                <Select onValueChange={(val) => setValue('categoryId', val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.categoryId && (
+                  <p className="text-sm text-error-500">{errors.categoryId.message}</p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Ticket'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

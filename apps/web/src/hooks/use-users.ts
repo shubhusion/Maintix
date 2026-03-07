@@ -19,7 +19,7 @@ interface UserListResponse {
   };
 }
 
-export function useUsers(search?: string) {
+export function useUsers(search?: string, enabled = true) {
   return useQuery({
     queryKey: ['users', search],
     queryFn: () => {
@@ -28,6 +28,7 @@ export function useUsers(search?: string) {
       const qs = params.toString();
       return api.get<UserListResponse>(`/users${qs ? `?${qs}` : ''}`);
     },
+    enabled,
   });
 }
 

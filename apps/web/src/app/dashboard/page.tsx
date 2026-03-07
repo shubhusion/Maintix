@@ -16,7 +16,10 @@ export default function DashboardPage() {
   const { data: properties, isLoading } = useProperties();
   const propertyIds = properties?.map((p) => p.id) ?? [];
   const { tickets, isLoading: ticketsLoading } = useAllPropertyTickets(propertyIds);
-  const { data: allUsers, isLoading: usersLoading } = useUsers();
+  const { data: allUsers, isLoading: usersLoading } = useUsers(
+    undefined,
+    user?.role === Role.MANAGER,
+  );
 
   const openCount = tickets.filter((t) => t.status === TicketStatus.OPEN).length;
   const awaitingCount = tickets.filter((t) => t.status === TicketStatus.AWAITING_APPROVAL).length;

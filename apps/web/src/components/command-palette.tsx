@@ -7,6 +7,7 @@ import { Home, Building2, Ticket, Users, Bell, Search } from 'lucide-react';
 import { useProperties } from '@/hooks/use-properties';
 import { useAuth } from '@/contexts/auth-context';
 import { Role } from '@maintix/shared-types';
+import { DialogTitle } from '@radix-ui/react-dialog';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -37,6 +38,7 @@ export function CommandPalette() {
       label="Command palette"
       className="fixed inset-0 z-[100]"
     >
+      <DialogTitle className="sr-only">Command Palette</DialogTitle>
       <div className="fixed inset-0 bg-black/50" onClick={() => setOpen(false)} />
       <div className="fixed left-1/2 top-[20%] z-[101] w-full max-w-lg -translate-x-1/2 rounded-xl border bg-popover shadow-2xl">
         <div className="flex items-center gap-2 border-b px-3">
