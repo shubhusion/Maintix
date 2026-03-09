@@ -1,11 +1,18 @@
 'use client';
 
-import { useState, useDeferredValue } from 'react';
+import { useState, useDeferredValue, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Ticket, ArrowUpDown, Search } from 'lucide-react';
+import { Plus, Ticket, ArrowUpDown, Search, Upload, X, FileText, ImageIcon } from 'lucide-react';
+import {
+  ALLOWED_FILE_TYPES,
+  ALLOWED_FILE_EXTENSIONS,
+  MAX_UPLOAD_SIZE,
+  MAX_ATTACHMENTS_PER_TICKET,
+} from '@maintix/shared-types';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { useProperties } from '@/hooks/use-properties';
@@ -45,17 +52,12 @@ import { TicketStatus, Priority } from '@maintix/shared-types';
 
 export default function TicketsPage() {
   const { user } = useAuth();
-  console.log('[DEBUG] User:', user);
-  console.log('[DEBUG] User role:', user?.role, 'Type:', typeof user?.role);
   const searchParams = useSearchParams();
   const initialPropertyId = searchParams.get('propertyId') || '';
-  console.log('[DEBUG] initialPropertyId from URL:', initialPropertyId);
   const { data: properties } = useProperties();
-  console.log('[DEBUG] Properties:', properties);
   const { toast } = useToast();
 
   const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId || 'all');
-  console.log('[DEBUG] selectedPropertyId state:', selectedPropertyId);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('createdAt');
@@ -63,9 +65,10 @@ export default function TicketsPage() {
   const [searchInput, setSearchInput] = useState('');
   const deferredSearch = useDeferredValue(searchInput);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isAllProperties = selectedPropertyId === 'all';
-  console.log('[DEBUG] isAllProperties:', isAllProperties);
   const allPropertyIds = properties?.map((p) => p.id) ?? [];
 
   const queryParams: TicketQueryParams = {};
@@ -92,9 +95,10 @@ export default function TicketsPage() {
   const createTicket = useCreateTicket(isAllProperties ? '' : selectedPropertyId);
 
   const isLoading = isAllProperties ? isAllLoading : isSingleLoading;
-  const tickets = isAllProperties
+  const tickets = (isAllProperties
     ? allTickets
-    : (ticketsData?.pages.flatMap((page) => page.data) ?? []);
+    : (ticketsData?.pages.flatMap((page) => page.data) ?? [])
+  ).filter((t) => t !== undefined && t !== null);
 
   const {
     register,
@@ -109,15 +113,63 @@ export default function TicketsPage() {
 
   const onSubmit = async (data: CreateTicketFormData) => {
     try {
-      await createTicket.mutateAsync(data);
-      toast({ title: 'Ticket created successfully' });
+      await createTicket.mutateAsync({ ...data, files: selectedFiles });
+      toast({
+        title: 'Ticket created successfully',
+        description: selectedFiles.length > 0
+          ? `${selectedFiles.length} attachment${selectedFiles.length !== 1 ? 's' : ''} uploaded`
+          : undefined,
+      });
       setDialogOpen(false);
       reset();
+      setSelectedFiles([]);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An error occurred';
       toast({ title: 'Error', description: message, variant: 'destructive' });
     }
   };
+
+  const handleFileSelect = useCallback(
+    (files: FileList | File[]) => {
+      const newFiles = Array.from(files);
+      const totalCount = selectedFiles.length + newFiles.length;
+
+      if (totalCount > MAX_ATTACHMENTS_PER_TICKET) {
+        toast({
+          title: 'Too many files',
+          description: `Maximum of ${MAX_ATTACHMENTS_PER_TICKET} attachments per ticket`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      for (const file of newFiles) {
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+          toast({
+            title: 'Invalid file type',
+            description: `"${file.name}" is not supported. Allowed: ${ALLOWED_FILE_EXTENSIONS.join(', ')}`,
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (file.size > MAX_UPLOAD_SIZE) {
+          toast({
+            title: 'File too large',
+            description: `"${file.name}" exceeds the ${MAX_UPLOAD_SIZE / (1024 * 1024)}MB limit`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      setSelectedFiles((prev) => [...prev, ...newFiles]);
+    },
+    [selectedFiles, toast],
+  );
+
+  const removeFile = useCallback((index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -126,23 +178,12 @@ export default function TicketsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
           <p className="text-muted-foreground">Maintenance requests across your properties.</p>
         </div>
-        {(() => {
-          const showButton = user?.role === 'TENANT' && selectedPropertyId && !isAllProperties;
-          console.log('[DEBUG] Button condition:', {
-            roleCheck: user?.role === 'TENANT',
-            hasPropertyId: !!selectedPropertyId,
-            notAllProperties: !isAllProperties,
-            finalResult: showButton,
-          });
-          return (
-            showButton && (
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                New Ticket
-              </Button>
-            )
-          );
-        })()}
+        {user?.role === 'TENANT' && selectedPropertyId && !isAllProperties && (
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Ticket
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -289,8 +330,17 @@ export default function TicketsPage() {
 
       {/* Create Ticket Dialog */}
       {user?.role === 'TENANT' && (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) {
+              reset();
+              setSelectedFiles([]);
+            }
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Ticket</DialogTitle>
               <DialogDescription>Submit a new maintenance request.</DialogDescription>
@@ -348,6 +398,83 @@ export default function TicketsPage() {
                   <p className="text-sm text-error-500">{errors.categoryId.message}</p>
                 )}
               </div>
+
+              {/* Attachments */}
+              <div className="space-y-2">
+                <Label>Attachments</Label>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files);
+                  }}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed p-4 transition-colors cursor-pointer',
+                    'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50',
+                  )}
+                >
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Drag & drop or click to browse
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {ALLOWED_FILE_EXTENSIONS.join(', ')} — Max {MAX_UPLOAD_SIZE / (1024 * 1024)}MB — {MAX_ATTACHMENTS_PER_TICKET - selectedFiles.length} slot{MAX_ATTACHMENTS_PER_TICKET - selectedFiles.length !== 1 ? 's' : ''} remaining
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept={ALLOWED_FILE_TYPES.join(',')}
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      handleFileSelect(e.target.files);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                {selectedFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    {selectedFiles.map((file, idx) => (
+                      <div
+                        key={`${file.name}-${idx}`}
+                        className="flex items-center gap-2 rounded-md border p-2 text-sm"
+                      >
+                        {file.type.startsWith('image/') ? (
+                          <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate flex-1">{file.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {(file.size / 1024).toFixed(0)}KB
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeFile(idx)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel

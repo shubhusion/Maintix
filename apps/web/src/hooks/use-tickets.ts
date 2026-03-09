@@ -65,8 +65,18 @@ function buildQueryString(params: TicketQueryParams): string {
 export function useTickets(propertyId: string, params: TicketQueryParams = {}) {
   return useQuery({
     queryKey: ['tickets', propertyId, params],
-    queryFn: () =>
-      api.get<TicketsResponse>(`/properties/${propertyId}/tickets${buildQueryString(params)}`),
+    queryFn: async () => {
+      const result = await api.get<TicketsResponse | Ticket[]>(
+        `/properties/${propertyId}/tickets${buildQueryString(params)}`,
+      );
+      // The TransformInterceptor passes {data,meta} responses through as-is,
+      // and api-client does result.data — so we may receive the raw Ticket[]
+      // OR a TicketsResponse depending on exact response shape.
+      if (Array.isArray(result)) {
+        return { data: result, meta: { hasMore: false, nextCursor: null } };
+      }
+      return result as TicketsResponse;
+    },
     enabled: !!propertyId,
   });
 }
@@ -74,11 +84,16 @@ export function useTickets(propertyId: string, params: TicketQueryParams = {}) {
 export function useInfiniteTickets(propertyId: string, params: TicketQueryParams = {}) {
   return useInfiniteQuery({
     queryKey: ['tickets', 'infinite', propertyId, params],
-    queryFn: ({ pageParam }) => {
+    queryFn: async ({ pageParam }) => {
       const merged = pageParam ? { ...params, cursor: pageParam } : params;
-      return api.get<TicketsResponse>(
+      const result = await api.get<TicketsResponse | Ticket[]>(
         `/properties/${propertyId}/tickets${buildQueryString(merged)}`,
       );
+      // Normalize: api-client may return raw array if interceptor passes through
+      if (Array.isArray(result)) {
+        return { data: result, meta: { hasMore: false, nextCursor: null } };
+      }
+      return result as TicketsResponse;
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
@@ -98,10 +113,35 @@ export function useTicket(id: string) {
 export function useCreateTicket(propertyId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: { title: string; description: string; categoryId: string }) =>
-      api.post<Ticket>(`/properties/${propertyId}/tickets`, data),
+    mutationFn: async (data: {
+      title: string;
+      description: string;
+      categoryId: string;
+      files?: File[];
+    }) => {
+      const { files, ...ticketData } = data;
+      const ticket = await api.post<Ticket>(
+        `/properties/${propertyId}/tickets`,
+        ticketData,
+      );
+
+      // Upload attachments sequentially after ticket creation
+      if (files && files.length > 0 && ticket?.id) {
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('file', file);
+          await api.upload(
+            `/properties/${propertyId}/tickets/${ticket.id}/attachments`,
+            formData,
+          );
+        }
+      }
+
+      return ticket;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets', propertyId] });
+      queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
 }
@@ -226,8 +266,16 @@ export function useAllPropertyTickets(propertyIds: string[], params: TicketQuery
   const queries = useQueries({
     queries: propertyIds.map((propertyId) => ({
       queryKey: ['tickets', propertyId, params],
-      queryFn: () =>
-        api.get<TicketsResponse>(`/properties/${propertyId}/tickets${buildQueryString(params)}`),
+      queryFn: async () => {
+        const result = await api.get<TicketsResponse | Ticket[]>(
+          `/properties/${propertyId}/tickets${buildQueryString(params)}`,
+        );
+        // Normalize: api-client may return raw array if interceptor passes through
+        if (Array.isArray(result)) {
+          return { data: result, meta: { hasMore: false, nextCursor: null } };
+        }
+        return result as TicketsResponse;
+      },
       enabled: propertyIds.length > 0,
     })),
   });
@@ -236,7 +284,14 @@ export function useAllPropertyTickets(propertyIds: string[], params: TicketQuery
   const isError = queries.some((q) => q.isError);
 
   const tickets = queries
-    .flatMap((q) => q.data?.data ?? [])
+    .flatMap((q) => {
+      const data = q.data;
+      if (!data) return [];
+      // data might be TicketsResponse or raw array depending on cache state
+      if (Array.isArray(data)) return data;
+      return data.data ?? [];
+    })
+    .filter((ticket): ticket is Ticket => ticket !== undefined && ticket !== null)
     .sort((a, b) => {
       const dir = params.sortDir === 'asc' ? 1 : -1;
       const field = params.sortBy || 'createdAt';
@@ -281,12 +336,19 @@ interface ActivitiesResponse {
 export function useTicketActivities(ticketId: string) {
   return useInfiniteQuery({
     queryKey: ['tickets', ticketId, 'activity'],
-    queryFn: ({ pageParam }) => {
+    queryFn: async ({ pageParam }) => {
       const params = pageParam ? `?cursor=${pageParam}` : '';
-      return api.get<ActivitiesResponse>(`/tickets/${ticketId}/activity${params}`);
+      const result = await api.get<ActivitiesResponse | TicketActivity[]>(
+        `/tickets/${ticketId}/activity${params}`,
+      );
+      // Normalize: api-client may return raw array if interceptor passes through
+      if (Array.isArray(result)) {
+        return { data: result, meta: { hasMore: false, nextCursor: null } };
+      }
+      return result as ActivitiesResponse;
     },
     initialPageParam: '',
-    getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
+    getNextPageParam: (lastPage) => lastPage.meta?.nextCursor ?? undefined,
     enabled: !!ticketId,
   });
 }

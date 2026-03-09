@@ -1,9 +1,16 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Building2, Tag, Ticket, Plus, Trash2, UserPlus } from 'lucide-react';
+import { Building2, Tag, Ticket, Plus, Trash2, UserPlus, Upload, X, FileText, ImageIcon } from 'lucide-react';
+import {
+  ALLOWED_FILE_TYPES,
+  ALLOWED_FILE_EXTENSIONS,
+  MAX_UPLOAD_SIZE,
+  MAX_ATTACHMENTS_PER_TICKET,
+} from '@maintix/shared-types';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import {
   useProperty,
@@ -12,13 +19,19 @@ import {
   useRemoveMember,
 } from '@/hooks/use-properties';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
-import { useTickets } from '@/hooks/use-tickets';
+import { useTickets, useCreateTicket } from '@/hooks/use-tickets';
 import { useUsers } from '@/hooks/use-users';
 import { useAuth } from '@/contexts/auth-context';
-import { createCategorySchema, type CreateCategoryFormData } from '@/lib/validations';
+import {
+  createCategorySchema,
+  type CreateCategoryFormData,
+  createTicketSchema,
+  type CreateTicketFormData,
+} from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -66,12 +79,16 @@ export default function PropertyDetailPage({
   const addMember = useAddMember(propertyId);
   const removeMember = useRemoveMember(propertyId);
   const createCategory = useCreateCategory(propertyId);
+  const createTicket = useCreateTicket(propertyId);
   const { toast } = useToast();
 
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
+  const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [removeMemberTarget, setRemoveMemberTarget] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isManager = user?.role === Role.MANAGER;
 
@@ -82,6 +99,17 @@ export default function PropertyDetailPage({
     formState: { errors, isSubmitting },
   } = useForm<CreateCategoryFormData>({
     resolver: zodResolver(createCategorySchema),
+  });
+
+  const {
+    register: registerTicket,
+    handleSubmit: handleTicketSubmit,
+    reset: resetTicket,
+    setValue: setTicketValue,
+    watch: watchTicket,
+    formState: { errors: ticketErrors, isSubmitting: isTicketSubmitting },
+  } = useForm<CreateTicketFormData>({
+    resolver: zodResolver(createTicketSchema),
   });
 
   const onCreateCategory = async (data: CreateCategoryFormData) => {
@@ -95,6 +123,66 @@ export default function PropertyDetailPage({
       toast({ title: 'Error', description: message, variant: 'destructive' });
     }
   };
+
+  const onCreateTicket = async (data: CreateTicketFormData) => {
+    try {
+      await createTicket.mutateAsync({ ...data, files: selectedFiles });
+      toast({
+        title: 'Ticket created successfully',
+        description: selectedFiles.length > 0
+          ? `${selectedFiles.length} attachment${selectedFiles.length !== 1 ? 's' : ''} uploaded`
+          : undefined,
+      });
+      setTicketDialogOpen(false);
+      resetTicket();
+      setSelectedFiles([]);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    }
+  };
+
+  const handleFileSelect = useCallback(
+    (files: FileList | File[]) => {
+      const newFiles = Array.from(files);
+      const totalCount = selectedFiles.length + newFiles.length;
+
+      if (totalCount > MAX_ATTACHMENTS_PER_TICKET) {
+        toast({
+          title: 'Too many files',
+          description: `Maximum of ${MAX_ATTACHMENTS_PER_TICKET} attachments per ticket`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      for (const file of newFiles) {
+        if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+          toast({
+            title: 'Invalid file type',
+            description: `"${file.name}" is not supported. Allowed: ${ALLOWED_FILE_EXTENSIONS.join(', ')}`,
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (file.size > MAX_UPLOAD_SIZE) {
+          toast({
+            title: 'File too large',
+            description: `"${file.name}" exceeds the ${MAX_UPLOAD_SIZE / (1024 * 1024)}MB limit`,
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
+      setSelectedFiles((prev) => [...prev, ...newFiles]);
+    },
+    [selectedFiles, toast],
+  );
+
+  const removeFile = useCallback((index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const onAddMember = async () => {
     if (!selectedUserId) return;
@@ -141,16 +229,24 @@ export default function PropertyDetailPage({
     );
   }
 
-  const tickets = ticketsData?.data ?? [];
+  const tickets = (ticketsData?.data ?? []).filter(t => t !== undefined && t !== null);
   const memberIds = new Set(members?.map((m) => m.userId) ?? []);
   const addableUsers = allUsers?.data?.filter((u) => !memberIds.has(u.id)) ?? [];
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{property.name}</h1>
-        <p className="text-muted-foreground">{property.address}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{property.name}</h1>
+          <p className="text-muted-foreground">{property.address}</p>
+        </div>
+        {user?.role === Role.TENANT && (
+          <Button onClick={() => setTicketDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Ticket
+          </Button>
+        )}
       </div>
 
       {/* Stats row */}
@@ -297,15 +393,14 @@ export default function PropertyDetailPage({
                   <div className="ml-4 flex items-center gap-2">
                     {ticket.priority && priorityConfig[ticket.priority] && (
                       <span
-                        className={`h-2 w-2 rounded-full ${
-                          ticket.priority === Priority.URGENT
-                            ? 'animate-pulse bg-error-500'
-                            : ticket.priority === Priority.HIGH
-                              ? 'bg-warning-500'
-                              : ticket.priority === Priority.MEDIUM
-                                ? 'bg-primary-500'
-                                : 'bg-neutral-400'
-                        }`}
+                        className={`h-2 w-2 rounded-full ${ticket.priority === Priority.URGENT
+                          ? 'animate-pulse bg-error-500'
+                          : ticket.priority === Priority.HIGH
+                            ? 'bg-warning-500'
+                            : ticket.priority === Priority.MEDIUM
+                              ? 'bg-primary-500'
+                              : 'bg-neutral-400'
+                          }`}
                       />
                     )}
                     <Badge variant={statusConfig[ticket.status]?.variant ?? 'secondary'}>
@@ -384,6 +479,166 @@ export default function PropertyDetailPage({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Create Ticket Dialog */}
+      {user?.role === Role.TENANT && (
+        <Dialog
+          open={ticketDialogOpen}
+          onOpenChange={(open) => {
+            setTicketDialogOpen(open);
+            if (!open) {
+              resetTicket();
+              setSelectedFiles([]);
+            }
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create Ticket</DialogTitle>
+              <DialogDescription>Submit a new maintenance request.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleTicketSubmit(onCreateTicket)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">
+                  Title <span className="text-error-500">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="e.g. Leaking faucet in unit 3B"
+                  {...registerTicket('title')}
+                />
+                {ticketErrors.title && <p className="text-sm text-error-500">{ticketErrors.title.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">
+                  Description <span className="text-error-500">*</span>
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe the issue in detail..."
+                  rows={4}
+                  {...registerTicket('description')}
+                />
+                <div className="flex justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {ticketErrors.description && (
+                      <span className="text-error-500">{ticketErrors.description.message}</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {watchTicket('description')?.length ?? 0} / 5000
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>
+                  Category <span className="text-error-500">*</span>
+                </Label>
+                <Select onValueChange={(val) => setTicketValue('categoryId', val)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {ticketErrors.categoryId && (
+                  <p className="text-sm text-error-500">{ticketErrors.categoryId.message}</p>
+                )}
+              </div>
+
+              {/* Attachments */}
+              <div className="space-y-2">
+                <Label>Attachments</Label>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files);
+                  }}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed p-4 transition-colors cursor-pointer',
+                    'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50',
+                  )}
+                >
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Drag & drop or click to browse
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {ALLOWED_FILE_EXTENSIONS.join(', ')} — Max {MAX_UPLOAD_SIZE / (1024 * 1024)}MB — {MAX_ATTACHMENTS_PER_TICKET - selectedFiles.length} slot{MAX_ATTACHMENTS_PER_TICKET - selectedFiles.length !== 1 ? 's' : ''} remaining
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept={ALLOWED_FILE_TYPES.join(',')}
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      handleFileSelect(e.target.files);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                {selectedFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    {selectedFiles.map((file, idx) => (
+                      <div
+                        key={`${file.name}-${idx}`}
+                        className="flex items-center gap-2 rounded-md border p-2 text-sm"
+                      >
+                        {file.type.startsWith('image/') ? (
+                          <ImageIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <span className="truncate flex-1">{file.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {(file.size / 1024).toFixed(0)}KB
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => removeFile(idx)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setTicketDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isTicketSubmitting}>
+                  {isTicketSubmitting ? 'Creating...' : 'Create Ticket'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Remove Member Confirmation */}
       <AlertDialog
