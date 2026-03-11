@@ -15,8 +15,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Search,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { useUnreadCount } from '@/hooks/use-notifications';
@@ -44,6 +46,12 @@ const navigation = [
     href: '/dashboard/users',
     icon: Users,
     roles: [Role.MANAGER] as Role[],
+  },
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
+    icon: SettingsIcon,
+    roles: 'all' as const,
   },
 ];
 
@@ -304,7 +312,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );

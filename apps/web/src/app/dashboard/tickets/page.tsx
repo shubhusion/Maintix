@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Ticket, ArrowUpDown, Search, Upload, X, FileText, ImageIcon } from 'lucide-react';
+import { Plus, ArrowUpDown, Search, Upload, X, FileText, ImageIcon, List, LayoutGrid } from 'lucide-react';
 import {
   ALLOWED_FILE_TYPES,
   ALLOWED_FILE_EXTENSIONS,
@@ -13,8 +13,6 @@ import {
   MAX_ATTACHMENTS_PER_TICKET,
 } from '@maintix/shared-types';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { formatDistanceToNow } from 'date-fns';
 import { useProperties } from '@/hooks/use-properties';
 import {
   useInfiniteTickets,
@@ -28,8 +26,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -45,10 +41,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { statusConfig } from '@/lib/ticket-config';
 import { TicketStatus, Priority } from '@maintix/shared-types';
+import { TicketsTable } from '@/components/tickets/tickets-table';
+import { type TicketTableItem } from '@/components/tickets/tickets-table-columns';
+import { TicketsKanbanBoard, type KanbanTicket } from '@/components/tickets/tickets-kanban';
 
 export default function TicketsPage() {
   const { user } = useAuth();
@@ -64,6 +62,7 @@ export default function TicketsPage() {
   const [sortDir, setSortDir] = useState<string>('desc');
   const [searchInput, setSearchInput] = useState('');
   const deferredSearch = useDeferredValue(searchInput);
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -81,9 +80,6 @@ export default function TicketsPage() {
   const {
     data: ticketsData,
     isLoading: isSingleLoading,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
   } = useInfiniteTickets(isAllProperties ? '' : selectedPropertyId, queryParams);
 
   const { tickets: allTickets, isLoading: isAllLoading } = useAllPropertyTickets(
@@ -99,6 +95,33 @@ export default function TicketsPage() {
     ? allTickets
     : (ticketsData?.pages.flatMap((page) => page.data) ?? [])
   ).filter((t) => t !== undefined && t !== null);
+
+  // Transform tickets to table items
+  const tableItems: TicketTableItem[] = tickets.map((t) => ({
+    id: t.id,
+    title: t.title,
+    property: t.property,
+    category: t.category,
+    status: t.status,
+    priority: t.priority,
+    createdBy: t.createdBy,
+    assignedTo: t.assignedTo,
+    createdAt: t.createdAt,
+    updatedAt: t.updatedAt,
+  }));
+
+  // Transform tickets for Kanban
+  const kanbanItems: KanbanTicket[] = tickets.map((t) => ({
+    id: t.id,
+    title: t.title,
+    property: t.property,
+    category: t.category,
+    status: t.status,
+    priority: t.priority,
+    assignedTo: t.assignedTo,
+    createdAt: t.createdAt,
+    updatedAt: t.updatedAt,
+  }));
 
   const {
     register,
@@ -262,70 +285,52 @@ export default function TicketsPage() {
         </Select>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-[72px] rounded-lg" />
-          ))}
+      {/* View Toggle */}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center rounded-lg border p-1">
+          <button
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors",
+              viewMode === 'list'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <List className="h-4 w-4" />
+            List
+          </button>
+          <button
+            onClick={() => setViewMode('board')}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors",
+              viewMode === 'board'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Board
+          </button>
         </div>
-      ) : tickets.length > 0 ? (
-        <div className="space-y-3">
-          {tickets.map((ticket) => (
-            <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`}>
-              <div className="flex items-center justify-between rounded-lg border p-4 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{ticket.title}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {isAllProperties && ticket.property?.name && (
-                      <span className="font-medium text-foreground/70">
-                        {ticket.property.name} ·{' '}
-                      </span>
-                    )}
-                    {ticket.category?.name} · {ticket.createdBy?.firstName}{' '}
-                    {ticket.createdBy?.lastName} ·{' '}
-                    {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
-                  </p>
-                </div>
-                <div className="ml-4 flex items-center gap-3">
-                  {ticket.priority === Priority.URGENT && (
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-error-500" />
-                  )}
-                  {ticket.priority === Priority.HIGH && (
-                    <span className="h-2 w-2 rounded-full bg-warning-500" />
-                  )}
-                  {ticket.assignedTo && (
-                    <span className="text-xs text-muted-foreground">
-                      → {ticket.assignedTo.firstName}
-                    </span>
-                  )}
-                  <Badge variant={statusConfig[ticket.status]?.variant ?? 'secondary'}>
-                    {statusConfig[ticket.status]?.label ?? ticket.status}
-                  </Badge>
-                </div>
-              </div>
-            </Link>
-          ))}
-          {!isAllProperties && hasNextPage && (
-            <div className="text-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-              >
-                {isFetchingNextPage ? 'Loading...' : 'Load More'}
-              </Button>
-            </div>
-          )}
-        </div>
+      </div>
+
+      {/* Tickets View */}
+      {viewMode === 'list' ? (
+        <TicketsTable
+          tickets={tableItems}
+          isLoading={isLoading}
+          showProperty={isAllProperties}
+        />
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Ticket className="mb-4 h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mb-1 text-lg font-medium">No tickets</h3>
-            <p className="text-sm text-muted-foreground">Create your first maintenance ticket.</p>
-          </CardContent>
-        </Card>
+        <div className="h-[calc(100vh-24rem)]">
+          <TicketsKanbanBoard
+            tickets={kanbanItems}
+            onTicketClick={(ticketId) => {
+              window.location.href = `/dashboard/tickets/${ticketId}`;
+            }}
+          />
+        </div>
       )}
 
       {/* Create Ticket Dialog */}

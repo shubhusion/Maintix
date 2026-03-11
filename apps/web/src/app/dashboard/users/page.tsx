@@ -3,15 +3,13 @@
 import { useState, useDeferredValue } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Users as UsersIcon, Mail, Shield, Search } from 'lucide-react';
+import { Plus, Shield, Search } from 'lucide-react';
 import { useUsers, useCreateUser, type User } from '@/hooks/use-users';
 import { useAuth } from '@/contexts/auth-context';
 import { createUserSchema } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -27,19 +25,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Role } from '@maintix/shared-types';
 import type { z } from 'zod';
+import { UsersTable } from '@/components/users/users-table';
+import { type UserTableItem } from '@/components/users/users-table-columns';
 
 type CreateUserValues = z.infer<typeof createUserSchema>;
-
-const roleConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> =
-  {
-    [Role.MANAGER]: { label: 'Manager', variant: 'default' },
-    [Role.TECHNICIAN]: { label: 'Technician', variant: 'secondary' },
-    [Role.TENANT]: { label: 'Tenant', variant: 'outline' },
-  };
 
 export default function UsersPage() {
   const { user } = useAuth();
@@ -51,6 +43,16 @@ export default function UsersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const isManager = user?.role === Role.MANAGER;
+
+  // Transform users to table items
+  const tableItems: UserTableItem[] = (users?.data ?? []).map((u: User) => ({
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    email: u.email,
+    role: u.role as Role,
+    createdAt: u.createdAt,
+  }));
 
   const form = useForm<CreateUserValues>({
     resolver: zodResolver(createUserSchema),
@@ -105,53 +107,8 @@ export default function UsersPage() {
         />
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-20" />
-          ))}
-        </div>
-      ) : !users?.data?.length ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <UsersIcon className="mb-4 h-12 w-12 text-muted-foreground/30" />
-            <h3 className="text-lg font-medium">No users yet</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Create your first user to get started.
-            </p>
-            <Button className="mt-4" onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {users.data.map((u: User) => {
-            const rc = roleConfig[u.role] ?? { label: u.role, variant: 'outline' as const };
-            return (
-              <Card key={u.id}>
-                <CardContent className="flex items-center gap-4 py-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    {u.firstName?.[0]}
-                    {u.lastName?.[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">
-                      {u.firstName} {u.lastName}
-                    </p>
-                    <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {u.email}
-                    </p>
-                  </div>
-                  <Badge variant={rc.variant}>{rc.label}</Badge>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+      {/* Users Table */}
+      <UsersTable users={tableItems} isLoading={isLoading} />
 
       {/* Create User Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
