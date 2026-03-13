@@ -1,0 +1,67 @@
+# Standalone NestJS Production Dockerfile
+# This Dockerfile creates a self-contained NestJS deployment
+# No monorepo dependencies needed!
+
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy only what's needed for API (standalone)
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/shared-types/ ./apps/api/shared-types/
+COPY apps/api/prisma/ ./apps/api/prisma/
+COPY apps/api/src/ ./apps/api/src/
+
+# Install dependencies
+WORKDIR /app/apps/api
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma client
+RUN pnpm prisma generate
+
+# Build shared-types
+WORKDIR /app/apps/api/shared-types
+RUN pnpm build
+
+# Build API
+WORKDIR /app/apps/api
+RUN pnpm build
+
+# Production stage
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nestjs
+
+# Copy built output from builder (everything needed to run)
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/apps/api/prisma ./prisma
+COPY --from=builder /app/apps/api/shared-types ./shared-types
+COPY --from=builder /app/apps/api/package.json ./apps/api/
+
+# Set ownership
+RUN chown -R nestjs:nodejs /app
+
+USER nestjs
+
+# Expose port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Start application
+CMD ["node", "apps/api/dist/main.js"]

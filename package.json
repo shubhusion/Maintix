@@ -9,12 +9,14 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "db:generate": "pnpm --filter @maintix/database db:generate",
-    "db:migrate": "pnpm --filter @maintix/database db:migrate",
-    "db:push": "pnpm --filter @maintix/database db:push",
-    "db:reset": "pnpm --filter @maintix/database db:reset",
-    "db:seed": "pnpm --filter @maintix/database db:seed",
-    "db:studio": "pnpm --filter @maintix/database db:studio"
+    "db:generate": "cd apps/api && pnpm prisma generate",
+    "db:migrate": "cd apps/api && pnpm prisma migrate dev",
+    "db:push": "cd apps/api && pnpm prisma db push",
+    "db:reset": "cd apps/api && pnpm prisma migrate reset",
+    "db:seed": "cd apps/api && pnpm ts-node prisma/seed.ts",
+    "db:studio": "cd apps/api && pnpm prisma studio",
+    "db:migrate:supabase": "bash migrate-supabase.sh",
+    "db:migrate:supabase:win": "powershell -ExecutionPolicy Bypass -File migrate-supabase.ps1"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

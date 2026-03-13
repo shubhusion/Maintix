@@ -1,9 +1,19 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Ticket Details | Maintix',
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#6366f1',
 };
 
-export default function TicketDetailsLayout({ children }: { children: React.ReactNode }) {
+export const metadata: Metadata = {
+  title: 'Ticket Details',
+};
+
+export default function TicketDetailServerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

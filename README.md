@@ -188,22 +188,34 @@ Open:
 ```
 Maintix/
 ├── apps/
-│   ├── api/              # NestJS backend (REST API)
-│   └── web/              # Next.js frontend (SPA)
-├── packages/
-│   ├── database/         # Prisma schema, client & seed
-│   ├── shared-types/     # Enums, types, constants, error codes
-│   ├── tsconfig/         # Shared TypeScript configurations
-│   └── eslint-config/    # Shared ESLint configuration
-├── docs/                 # Comprehensive documentation
-│   ├── screenshots/      # UI screenshots
-│   ├── architecture.md   # System design
-│   ├── api-reference.md  # API documentation
+│   ├── api/                  # NestJS backend (REST API) - STANDALONE
+│   │   ├── src/              # Source code
+│   │   ├── prisma/           # Prisma schema & seed
+│   │   ├── shared-types/     # Local shared types
+│   │   ├── package.json      # Standalone package
+│   │   └── Dockerfile.standalone
+│   │
+│   └── web/                  # Next.js frontend (SPA) - STANDALONE
+│       ├── src/              # Source code
+│       ├── shared-types/     # Local shared types
+│       ├── package.json      # Standalone package
+│       └── Dockerfile.standalone
+│
+├── packages/                 # Development reference only (optional)
+│   ├── database/
+│   ├── shared-types/
 │   └── ...
-├── docker-compose.yml    # PostgreSQL 16 container
-├── turbo.json            # Turborepo pipeline config
-└── pnpm-workspace.yaml   # Workspace definition
+├── docs/                     # Documentation
+│   ├── screenshots/          # UI screenshots
+│   ├── architecture.md       # System design
+│   ├── api-reference.md      # API documentation
+│   └── ...
+├── docker-compose.yml        # PostgreSQL 16 container
+├── turbo.json                # Turborepo pipeline config
+└── pnpm-workspace.yaml       # Workspace definition
 ```
+
+**Note:** Both `apps/api` and `apps/web` are fully standalone and can run independently without the `packages/` directory.
 
 ---
 
@@ -255,7 +267,7 @@ Users (7) ──┬── Properties (3) ──┬── Tickets (20)
             └── PropertyMembers ──┘
 ```
 
-Full schema in [`packages/database/prisma/schema.prisma`](./packages/database/prisma/schema.prisma)
+Full schema in [`apps/api/prisma/schema.prisma`](./apps/api/prisma/schema.prisma)
 
 ---
 
@@ -306,12 +318,12 @@ See the [`docs/`](./docs/) folder for comprehensive guides:
 
 | Document | Description |
 |----------|-------------|
-| [Architecture](./docs/architecture.md) | System design, monorepo structure, data flow |
+| [Architecture](./docs/architecture.md) | System design, standalone structure, data flow |
 | [Getting Started](./docs/getting-started.md) | Full setup guide with environment configuration |
 | [API Reference](./docs/api-reference.md) | Complete REST endpoint documentation |
 | [Frontend Guide](./docs/frontend.md) | Pages, components, hooks, theming |
 | [Database Schema](./docs/database.md) | Models, relationships, migrations |
-| [Shared Packages](./docs/shared-packages.md) | Types, constants, error codes |
+| [Standalone Apps](./docs/STANDALONE_APPS_GUIDE.md) | Guide for running standalone apps |
 | [Contributing](./docs/contributing.md) | Code style and contribution guidelines |
 
 ---
@@ -324,6 +336,7 @@ See the [`docs/`](./docs/) folder for comprehensive guides:
    - Enterprise-grade NestJS backend
    - Type-safe Prisma ORM
    - Scalable PostgreSQL database
+   - **Standalone apps** - API and Web run independently
 
 2. **Complete Workflow Implementation**
    - All 6 ticket statuses implemented
@@ -338,7 +351,7 @@ See the [`docs/`](./docs/) folder for comprehensive guides:
 4. **Code Quality**
    - Full TypeScript coverage
    - Clean code patterns
-   - Monorepo structure
+   - **Standalone structure** - Easy to deploy
 
 5. **Attention to Detail**
    - Custom empty state illustrations

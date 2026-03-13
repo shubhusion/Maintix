@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
@@ -15,6 +15,12 @@ const inter = Inter({
   weight: ['400', '500', '600'],
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#6366f1',
+};
+
 export const metadata: Metadata = {
   title: {
     default: 'Maintix — Multi-Property Maintenance Platform',
@@ -22,16 +28,7 @@ export const metadata: Metadata = {
   },
   description:
     'Streamline maintenance workflows across all your properties. Create tickets, assign technicians, and track progress in real-time.',
-  
-  // Viewport
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-  },
-  
-  // Theme color for browser chrome
-  themeColor: '#6366f1',
-  
+
   // Favicon
   icons: {
     icon: [
@@ -41,10 +38,10 @@ export const metadata: Metadata = {
     ],
     apple: '/favicon.svg',
   },
-  
+
   // Manifest
   manifest: '/manifest.json',
-  
+
   // Open Graph
   openGraph: {
     type: 'website',

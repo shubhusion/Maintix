@@ -71,7 +71,7 @@ export function TicketStatusChart({ tickets }: TicketStatusChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value?: number) => [value ?? 0, 'Tickets']}
+              formatter={(value: any) => [value ?? 0, 'Tickets']}
               contentStyle={{
                 borderRadius: '8px',
                 border: '1px solid hsl(var(--border))',

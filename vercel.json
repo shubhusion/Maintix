@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm install && pnpm --filter @maintix/shared-types build && pnpm --filter @maintix/web build",
-  "installCommand": "pnpm install",
+  "buildCommand": "cd apps/web/shared-types && npm install && npm run build && cd .. && npm install && npm run build",
+  "installCommand": "cd apps/web && npm install",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
 }
