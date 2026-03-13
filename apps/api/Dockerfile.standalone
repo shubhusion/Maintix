@@ -12,19 +12,21 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy only what's needed for API (standalone)
 COPY apps/api/package.json ./apps/api/
+COPY apps/api/tsconfig.json ./apps/api/
 COPY apps/api/shared-types/ ./apps/api/shared-types/
 COPY apps/api/prisma/ ./apps/api/prisma/
 COPY apps/api/src/ ./apps/api/src/
 
 # Install dependencies
 WORKDIR /app/apps/api
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Generate Prisma client
 RUN pnpm prisma generate
 
-# Build shared-types
+# Build shared-types (need to install deps first)
 WORKDIR /app/apps/api/shared-types
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 
 # Build API
