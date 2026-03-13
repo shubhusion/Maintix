@@ -48,17 +48,28 @@ export function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {[
-                { label: 'Documentation', href: '#' },
-                { label: 'Support', href: '#' },
-                { label: 'Status', href: '#' },
-              ].map(({ label, href }) => (
+                { label: 'Documentation', href: '/dashboard' },
+                { label: 'Support', href: 'mailto:support@maintix.app' },
+                { label: 'Status', href: 'https://status.maintix.app', external: true },
+              ].map(({ label, href, external }) => (
                 <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
-                  >
-                    {label}
-                  </Link>
+                  {external ? (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
+                    >
+                      {label}
+                    </a>
+                  ) : (
+                    <Link
+                      href={href}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
+                    >
+                      {label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
@@ -71,8 +82,8 @@ export function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {[
-                { label: 'Privacy Policy', href: '#' },
-                { label: 'Terms of Service', href: '#' },
+                { label: 'Privacy Policy', href: '/privacy' },
+                { label: 'Terms of Service', href: '/terms' },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <Link

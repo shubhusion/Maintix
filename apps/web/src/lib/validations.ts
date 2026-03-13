@@ -49,6 +49,7 @@ export const createTicketSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(200),
   description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
   categoryId: z.string().uuid('Select a category'),
+  priority: z.nativeEnum(Priority).optional(),
 });
 
 export type CreateTicketFormData = z.infer<typeof createTicketSchema>;

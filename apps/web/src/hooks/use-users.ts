@@ -48,4 +48,29 @@ export function useCreateUser() {
   });
 }
 
+export function useUpdateUser(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      firstName?: string;
+      lastName?: string;
+      role?: string;
+      isActive?: boolean;
+    }) => api.patch<User>(`/users/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
+export function useDeleteUser(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete(`/users/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}
+
 export type { User };

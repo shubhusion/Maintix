@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Properties | Maintix',
+  title: 'Properties',
 };
 
-export default function PropertiesLayout({ children }: { children: React.ReactNode }) {
+export default function PropertiesServerLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

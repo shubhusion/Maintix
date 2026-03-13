@@ -11,8 +11,6 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Eye,
-  EyeOff,
   Loader2,
   Lock,
   Mail,
@@ -42,7 +40,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -253,10 +250,14 @@ export default function LoginPage() {
                             placeholder="you@example.com"
                             className="pl-10 focus-visible:ring-primary-500/50 focus-visible:shadow-[0_0_0_3px_rgba(99,102,241,0.1)]"
                             {...register('email')}
+                            aria-invalid={!!errors.email}
+                            aria-describedby={errors.email ? 'email-error' : undefined}
                           />
                         </div>
                         {errors.email && (
-                          <p className="text-sm text-error-500">{errors.email.message}</p>
+                          <p id="email-error" className="text-sm text-error-500" role="alert">
+                            {errors.email.message}
+                          </p>
                         )}
                       </div>
                     </BlurFade>
@@ -271,26 +272,23 @@ export default function LoginPage() {
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                           <Input
                             id="password"
-                            type={showPassword ? 'text' : 'password'}
+                            type="password"
                             placeholder="Enter your password"
-                            className="pl-10 pr-10 focus-visible:ring-primary-500/50 focus-visible:shadow-[0_0_0_3px_rgba(99,102,241,0.1)]"
+                            className="pl-10 focus-visible:ring-primary-500/50 focus-visible:shadow-[0_0_0_3px_rgba(99,102,241,0.1)]"
                             {...register('password')}
+                            aria-invalid={!!errors.password}
+                            aria-describedby={errors.password ? 'password-error' : 'password-help'}
                           />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
                         </div>
                         {errors.password && (
-                          <p className="text-sm text-error-500">{errors.password.message}</p>
+                          <p id="password-error" className="text-sm text-error-500" role="alert">
+                            {errors.password.message}
+                          </p>
+                        )}
+                        {!errors.password && (
+                          <p id="password-help" className="text-xs text-muted-foreground">
+                            Must be at least 8 characters with an uppercase letter and a number.
+                          </p>
                         )}
                       </div>
                     </BlurFade>

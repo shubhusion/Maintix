@@ -47,6 +47,8 @@ import { TicketStatus, Priority } from '@maintix/shared-types';
 import { TicketsTable } from '@/components/tickets/tickets-table';
 import { type TicketTableItem } from '@/components/tickets/tickets-table-columns';
 import { TicketsKanbanBoard, type KanbanTicket } from '@/components/tickets/tickets-kanban';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
 
 export default function TicketsPage() {
   const { user } = useAuth();
@@ -61,7 +63,9 @@ export default function TicketsPage() {
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortDir, setSortDir] = useState<string>('desc');
   const [searchInput, setSearchInput] = useState('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const deferredSearch = useDeferredValue(searchInput);
+  const deferredDateRange = useDeferredValue(dateRange);
   const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -91,10 +95,29 @@ export default function TicketsPage() {
   const createTicket = useCreateTicket(isAllProperties ? '' : selectedPropertyId);
 
   const isLoading = isAllProperties ? isAllLoading : isSingleLoading;
-  const tickets = (isAllProperties
+  
+  // Filter tickets by date range
+  const filteredTickets = (isAllProperties
     ? allTickets
     : (ticketsData?.pages.flatMap((page) => page.data) ?? [])
-  ).filter((t) => t !== undefined && t !== null);
+  ).filter((t) => {
+    if (!t) return false;
+    if (!deferredDateRange?.from) return true;
+    
+    const ticketDate = new Date(t.createdAt);
+    const fromDate = new Date(deferredDateRange.from);
+    fromDate.setHours(0, 0, 0, 0);
+    
+    if (deferredDateRange.to) {
+      const toDate = new Date(deferredDateRange.to);
+      toDate.setHours(23, 59, 59, 999);
+      return ticketDate >= fromDate && ticketDate <= toDate;
+    }
+    
+    return ticketDate >= fromDate;
+  });
+
+  const tickets = filteredTickets;
 
   // Transform tickets to table items
   const tableItems: TicketTableItem[] = tickets.map((t) => ({
@@ -283,6 +306,24 @@ export default function TicketsPage() {
             <SelectItem value="priority:asc">Lowest Priority</SelectItem>
           </SelectContent>
         </Select>
+
+        <DateRangePicker
+          date={dateRange}
+          onDateChange={setDateRange}
+          placeholder="Filter by date"
+        />
+
+        {/* Clear date filter button */}
+        {dateRange?.from && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDateRange(undefined)}
+            className="h-10"
+          >
+            Clear
+          </Button>
+        )}
       </div>
 
       {/* View Toggle */}
@@ -401,6 +442,30 @@ export default function TicketsPage() {
                 </Select>
                 {errors.categoryId && (
                   <p className="text-sm text-error-500">{errors.categoryId.message}</p>
+                )}
+              </div>
+
+              {/* Priority Selector */}
+              <div className="space-y-2">
+                <Label>
+                  Priority
+                </Label>
+                <Select onValueChange={(val) => setValue('priority', val as Priority)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Leave as Medium for normal requests. Select High or Urgent for critical issues.
+                </p>
+                {errors.priority && (
+                  <p className="text-sm text-error-500">{errors.priority.message}</p>
                 )}
               </div>
 

@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build outputs
+dist
+.next
+build
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Tests
+*.test.ts
+*.spec.ts
+__tests__
+coverage
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.gcloudignore
+
+# Other apps in monorepo (we only deploy API)
+apps/web
+apps/*/node_modules
+
+# Turbo cache
+.turbo
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db

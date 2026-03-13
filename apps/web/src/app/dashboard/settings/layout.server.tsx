@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Tickets',
+  title: 'Settings',
 };
 
-export default function TicketsServerLayout({
+export default function SettingsServerLayout({
   children,
 }: {
   children: React.ReactNode;

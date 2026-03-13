@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   Search,
@@ -25,6 +24,17 @@ import { useUnreadCount } from '@/hooks/use-notifications';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { CommandPalette } from '@/components/command-palette';
+import { EnhancedBreadcrumbs } from '@/components/enhanced-breadcrumbs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Role } from '@maintix/shared-types';
 
 const navigation = [
@@ -64,6 +74,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count ?? 0;
   const sidebarRef = useRef<HTMLElement>(null);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   // Close sidebar on Escape key
   useEffect(() => {
@@ -91,14 +102,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
   const filteredNav = navigation.filter(
     (item) => item.roles === 'all' || (user && item.roles.includes(user.role as Role)),
   );
-
-  // Generate breadcrumbs from pathname
-  const breadcrumbs = generateBreadcrumbs(pathname);
-  const pageTitle =
-    breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard';
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -200,7 +210,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="shrink-0"
                 aria-label="Log out"
               >
@@ -224,7 +234,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="shrink-0"
                 aria-label="Log out"
               >
@@ -248,29 +258,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </button>
 
           {/* Breadcrumbs */}
-          {breadcrumbs.length > 0 && (
-            <nav aria-label="Breadcrumb" className="hidden sm:block">
-              <ol className="flex items-center gap-1 text-sm text-muted-foreground">
-                {breadcrumbs.map((crumb, index) => (
-                  <li key={crumb.href} className="flex items-center gap-1">
-                    {index > 0 && <ChevronRight className="h-3.5 w-3.5" />}
-                    {index === breadcrumbs.length - 1 ? (
-                      <span className="font-medium text-foreground" aria-current="page">
-                        {crumb.label}
-                      </span>
-                    ) : (
-                      <Link href={crumb.href} className="hover:text-foreground transition-colors">
-                        {crumb.label}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          )}
+          <EnhancedBreadcrumbs />
 
           {/* Mobile page title */}
-          <h1 className="text-lg font-semibold sm:hidden truncate">{pageTitle}</h1>
+          <h1 className="text-lg font-semibold sm:hidden truncate">Dashboard</h1>
 
           <div className="flex-1" />
 
@@ -326,31 +317,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Log out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out? You will need to sign in again to access your dashboard.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>
+              Log Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-}
-
-// Breadcrumb generation utility
-const routeLabels: Record<string, string> = {
-  dashboard: 'Dashboard',
-  properties: 'Properties',
-  tickets: 'Tickets',
-  users: 'Users',
-  notifications: 'Notifications',
-};
-
-function generateBreadcrumbs(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length <= 1) return []; // Just /dashboard — no breadcrumbs needed
-
-  const crumbs: { label: string; href: string }[] = [];
-  let currentPath = '';
-
-  for (const segment of segments) {
-    currentPath += `/${segment}`;
-    const label = routeLabels[segment] || decodeURIComponent(segment);
-    crumbs.push({ label, href: currentPath });
-  }
-
-  return crumbs;
 }

@@ -58,6 +58,16 @@ export function useUpdateProperty(id: string) {
   });
 }
 
+export function useDeleteProperty(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete(`/properties/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    },
+  });
+}
+
 export function useAddMember(propertyId: string) {
   const queryClient = useQueryClient();
   return useMutation({

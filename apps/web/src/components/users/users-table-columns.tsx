@@ -3,7 +3,8 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowUpDown, Mail, Pencil, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Role } from '@maintix/shared-types';
 
@@ -17,8 +18,14 @@ export interface UserTableItem {
   propertiesCount?: number;
 }
 
+interface UseUsersColumnsProps {
+  onEdit?: (user: UserTableItem) => void;
+  onDelete?: (user: UserTableItem) => void;
+  isManager: boolean;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useUsersColumns(): ColumnDef<UserTableItem>[] {
+export function useUsersColumns({ onEdit, onDelete, isManager }: UseUsersColumnsProps): ColumnDef<UserTableItem>[] {
   return [
     {
       accessorKey: 'name',
@@ -125,5 +132,39 @@ export function useUsersColumns(): ColumnDef<UserTableItem>[] {
         );
       },
     },
+    ...(isManager
+      ? [
+          {
+            id: 'actions',
+            header: () => <span className="sr-only">Actions</span>,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            cell: ({ row }: any) => {
+              const user = row.original;
+              return (
+                <div className="flex items-center gap-1 justify-end">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onEdit?.(user)}
+                    aria-label="Edit user"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-error-500 hover:text-error-600 hover:bg-error-500/10"
+                    onClick={() => onDelete?.(user)}
+                    aria-label="Delete user"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 }

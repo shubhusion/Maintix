@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="twitterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="600" fill="url(#twitterGradient)"/>
+  
+  <!-- Centered logo -->
+  <rect x="540" y="200" width="120" height="120" rx="24" fill="white" fill-opacity="0.25"/>
+  <path d="M575 280V230L590 260L605 230V280" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  
+  <!-- Brand name -->
+  <text x="600" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="white" text-anchor="middle">
+    Maintix
+  </text>
+  
+  <!-- Tagline -->
+  <text x="600" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="white" fill-opacity="0.9" text-anchor="middle">
+    Property Maintenance Management
+  </text>
+</svg>
