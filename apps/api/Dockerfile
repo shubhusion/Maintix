@@ -9,10 +9,10 @@ WORKDIR /app
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy package files (standalone - no monorepo needed)
+# Copy all files needed for build
 COPY package.json ./
 COPY tsconfig.json ./
-COPY shared-types/package.json ./shared-types/
+COPY shared-types/ ./shared-types/
 COPY prisma/ ./prisma/
 COPY src/ ./src/
 
@@ -22,13 +22,15 @@ RUN pnpm install --no-frozen-lockfile
 # Generate Prisma client
 RUN pnpm prisma generate
 
-# Build shared-types
+# Build shared-types first
 WORKDIR /app/shared-types
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 
-# Build API
+# Go back to app root and build API
 WORKDIR /app
+
+# Build API (shared-types is now built and available)
 RUN pnpm build
 
 # Production stage
