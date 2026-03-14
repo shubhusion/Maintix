@@ -52,15 +52,16 @@ RUN chown -R nestjs:nodejs /app
 
 USER nestjs
 
-# Expose port
-EXPOSE 3001
+# Expose port (Cloud Run will override with PORT env var)
+EXPOSE 8080
 
-# Health check
+# Health check (use PORT env var)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/health || exit 1
 
 # Set environment
 ENV NODE_ENV=production
+ENV PORT=8080
 
 # Start application
 CMD ["node", "dist/main.js"]
