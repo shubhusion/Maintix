@@ -12,7 +12,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy package files (standalone - no monorepo needed)
 COPY package.json ./
 COPY tsconfig.json ./
-COPY shared-types/ ./shared-types/
+COPY shared-types/package.json ./shared-types/
 COPY prisma/ ./prisma/
 COPY src/ ./src/
 
@@ -22,7 +22,7 @@ RUN pnpm install --no-frozen-lockfile
 # Generate Prisma client
 RUN pnpm prisma generate
 
-# Build shared-types (need to install deps first)
+# Build shared-types
 WORKDIR /app/shared-types
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
@@ -40,12 +40,17 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
-# Copy built output
+# Copy built API
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+
+# Copy built shared-types (IMPORTANT - include dist folder)
 COPY --from=builder /app/shared-types ./shared-types
-COPY --from=builder /app/package.json ./
+
+# Copy package.json files (for module resolution)
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/shared-types/package.json ./shared-types/package.json
 
 # Set ownership
 RUN chown -R nestjs:nodejs /app
