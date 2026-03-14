@@ -92,9 +92,18 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
-  // CORS
+  // CORS - Allow both with and without trailing slash
+  const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
+  const corsOrigins = [
+    corsOrigin,
+    corsOrigin.replace(/\/$/, ''), // Without trailing slash
+    corsOrigin.replace(/\/?$/, '/'), // With trailing slash
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN', 'http://localhost:3000'),
+    origin: corsOrigins,
     credentials: true,
   });
 
