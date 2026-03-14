@@ -3,8 +3,6 @@ name: Deploy API to Cloud Run
 on:
   push:
     branches: [main]
-    paths:
-      - 'apps/api/**'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
