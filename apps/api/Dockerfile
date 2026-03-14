@@ -1,6 +1,5 @@
 # Standalone NestJS Production Dockerfile
-# This Dockerfile creates a self-contained NestJS deployment
-# No monorepo dependencies needed!
+# Build from: cd apps/api && docker build -t maintix-api:latest .
 
 # Build stage
 FROM node:20-alpine AS builder
@@ -10,27 +9,26 @@ WORKDIR /app
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy only what's needed for API (standalone)
-COPY apps/api/package.json ./apps/api/
-COPY apps/api/tsconfig.json ./apps/api/
-COPY apps/api/shared-types/ ./apps/api/shared-types/
-COPY apps/api/prisma/ ./apps/api/prisma/
-COPY apps/api/src/ ./apps/api/src/
+# Copy package files (standalone - no monorepo needed)
+COPY package.json ./
+COPY tsconfig.json ./
+COPY shared-types/ ./shared-types/
+COPY prisma/ ./prisma/
+COPY src/ ./src/
 
 # Install dependencies
-WORKDIR /app/apps/api
 RUN pnpm install --no-frozen-lockfile
 
 # Generate Prisma client
 RUN pnpm prisma generate
 
 # Build shared-types (need to install deps first)
-WORKDIR /app/apps/api/shared-types
+WORKDIR /app/shared-types
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 
 # Build API
-WORKDIR /app/apps/api
+WORKDIR /app
 RUN pnpm build
 
 # Production stage
@@ -42,12 +40,12 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
-# Copy built output from builder (everything needed to run)
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=builder /app/apps/api/prisma ./prisma
-COPY --from=builder /app/apps/api/shared-types ./shared-types
-COPY --from=builder /app/apps/api/package.json ./apps/api/
+# Copy built output
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/shared-types ./shared-types
+COPY --from=builder /app/package.json ./
 
 # Set ownership
 RUN chown -R nestjs:nodejs /app
@@ -66,4 +64,4 @@ ENV NODE_ENV=production
 ENV PORT=3001
 
 # Start application
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["node", "dist/main.js"]

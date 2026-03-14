@@ -1,6 +1,5 @@
 # Standalone Next.js Production Dockerfile
-# This Dockerfile creates a self-contained Next.js deployment
-# No monorepo dependencies needed!
+# Build from: cd apps/web && docker build -t maintix-web:latest .
 
 # Build stage
 FROM node:22-alpine AS builder
@@ -10,27 +9,27 @@ WORKDIR /app
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@10.30.3 --activate
 
-# Copy only what's needed for web app (standalone)
-COPY apps/web/package.json ./apps/web/
-COPY apps/web/shared-types/ ./apps/web/shared-types/
-COPY apps/web/src/ ./apps/web/src/
-COPY apps/web/next.config.ts ./apps/web/
-COPY apps/web/tsconfig.json ./apps/web/
+# Copy package files (standalone - no monorepo needed)
+COPY package.json ./
+COPY tsconfig.json ./
+COPY next.config.ts ./
+COPY shared-types/ ./shared-types/
+COPY src/ ./src/
+COPY public/ ./public/
 
 # Install dependencies
-WORKDIR /app/apps/web
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
-# Build shared-types
-WORKDIR /app/apps/web/shared-types
+# Build shared-types (need to install deps first)
+WORKDIR /app/shared-types
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 
 # Build Next.js with standalone output
-WORKDIR /app/apps/web
+WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV BUILD_STANDALONE=true
-
 RUN pnpm build
 
 # Production stage
@@ -43,9 +42,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy standalone output
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./apps/web/.next/static
+COPY --from=builder /app/public ./public
 
 # Set ownership
 RUN chown -R nextjs:nodejs /app
@@ -55,13 +54,13 @@ USER nextjs
 # Expose port
 EXPOSE 3000
 
-# Set environment
-ENV NODE_ENV=production
-ENV PORT=3000
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3000
 
 # Start application
 CMD ["node", "server.js"]
