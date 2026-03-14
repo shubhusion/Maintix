@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - 'apps/api/**'
-      - 'pnpm-lock.yaml'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -15,59 +14,32 @@ env:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  migrate:
-    name: Run Database Migrations
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.30.3
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - run: pnpm install --no-frozen-lockfile
-
-      - name: Generate Prisma Client
-        run: cd apps/api && pnpm prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
-
-      - name: Run Migrations
-        run: cd apps/api && pnpm prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DIRECT_DATABASE_URL }}
-
   deploy:
-    name: Build & Deploy to Cloud Run
-    needs: migrate
+    name: Deploy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/api
+    
     steps:
       - uses: actions/checkout@v4
 
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
       - uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
+      - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.REGISTRY }}
 
       - name: Build Docker Image
         run: |
           docker build \
-            -f apps/api/Dockerfile \
-            --build-arg DATABASE_URL=${{ secrets.DATABASE_URL }} \
+            -f Dockerfile \
             -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:${{ github.sha }} \
             -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:latest \
             .
@@ -89,8 +61,7 @@ jobs:
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
-            --set-secrets="DATABASE_URL=DATABASE_URL:latest,JWT_SECRET=JWT_SECRET:latest,SUPABASE_URL=SUPABASE_URL:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest" \
-            --set-env-vars="NODE_ENV=production,CORS_ORIGIN=${{ vars.CORS_ORIGIN }}"
+            --set-env-vars="NODE_ENV=production,DATABASE_URL=${{ secrets.DATABASE_URL }},JWT_SECRET=${{ secrets.JWT_SECRET }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }},CORS_ORIGIN=${{ vars.CORS_ORIGIN }}"
 
       - name: Show Service URL
         run: |
