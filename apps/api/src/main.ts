@@ -54,7 +54,6 @@ function validateEnvironmentVariables(configService: ConfigService): void {
       logger.error(`  - ${envVar}`);
     }
     
-    logger.error('');
     logger.error('📝 Please set these environment variables:');
     logger.error('');
     logger.error('For Supabase (recommended):');
