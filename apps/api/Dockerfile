@@ -9,7 +9,7 @@ WORKDIR /app
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Copy all files needed for build
+# Copy all files
 COPY package.json ./
 COPY tsconfig.json ./
 COPY shared-types/ ./shared-types/
@@ -22,15 +22,13 @@ RUN pnpm install --no-frozen-lockfile
 # Generate Prisma client
 RUN pnpm prisma generate
 
-# Build shared-types first
+# Build shared-types
 WORKDIR /app/shared-types
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm build
 
-# Go back to app root and build API
+# Build API
 WORKDIR /app
-
-# Build API (shared-types is now built and available)
 RUN pnpm build
 
 # Production stage
@@ -47,22 +45,21 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 
-# Copy built shared-types (IMPORTANT - include dist folder)
-COPY --from=builder /app/shared-types ./shared-types
+# Copy shared-types to proper location in node_modules
+COPY --from=builder /app/shared-types ./node_modules/@maintix/shared-types
 
-# Copy package.json files (for module resolution)
+# Copy package.json
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/shared-types/package.json ./shared-types/package.json
 
 # Set ownership
 RUN chown -R nestjs:nodejs /app
 
 USER nestjs
 
-# Expose port (Cloud Run will override with PORT env var)
+# Expose port
 EXPOSE 8080
 
-# Health check (use PORT env var)
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/health || exit 1
 
