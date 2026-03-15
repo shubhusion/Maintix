@@ -81,6 +81,7 @@ describe('TicketsService', () => {
       title: 'Fix leaky faucet',
       description: 'Kitchen sink is dripping',
       categoryId: 'cat-1',
+      priority: Priority.MEDIUM,
     };
 
     it('should create a ticket and emit event', async () => {
