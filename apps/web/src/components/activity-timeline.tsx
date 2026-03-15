@@ -140,17 +140,18 @@ export function ActivityTimeline({ ticketId }: { ticketId: string }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          Activity
+          <span className="hidden sm:inline">Activity</span>
+          <span className="sm:hidden">Timeline</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3">
+              <div key={i} className="flex gap-2 sm:gap-3">
                 <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-48" />
@@ -181,7 +182,7 @@ export function ActivityTimeline({ ticketId }: { ticketId: string }) {
                 const isLast = index === activities.length - 1;
 
                 return (
-                  <div key={activity.id} className={`relative flex gap-3 ${isLast ? '' : 'pb-5'}`}>
+                  <div key={activity.id} className={`relative flex gap-2 sm:gap-3 ${isLast ? '' : 'pb-5'}`}>
                     {/* Icon node */}
                     <div
                       className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.bgColor}`}
@@ -191,7 +192,7 @@ export function ActivityTimeline({ ticketId }: { ticketId: string }) {
 
                     {/* Content */}
                     <div className="flex-1 min-w-0 pt-0.5">
-                      <p className="text-sm">
+                      <p className="text-xs sm:text-sm">
                         <span className="font-medium">
                           {activity.actor.firstName} {activity.actor.lastName}
                         </span>{' '}
@@ -216,7 +217,7 @@ export function ActivityTimeline({ ticketId }: { ticketId: string }) {
                   size="sm"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="text-xs"
+                  className="text-xs h-9"
                 >
                   {isFetchingNextPage ? 'Loading...' : 'Load older activity'}
                 </Button>

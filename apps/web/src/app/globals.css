@@ -318,11 +318,10 @@ html {
 
 /* ═══ Animated dashed connector (How It Works) ═══ */
 .animated-dash {
-  height: 1px;
-  background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
-  background-size: 8px 1px;
-  color: var(--border);
-  animation: dash-flow 0.8s linear infinite;
+  height: 2px;
+  background-image: linear-gradient(to right, var(--primary) 50%, transparent 50%);
+  background-size: 12px 2px;
+  animation: dash-flow 1s linear infinite;
 }
 
 @keyframes dash-flow {
@@ -330,7 +329,7 @@ html {
     background-position: 0 0;
   }
   to {
-    background-position: 16px 0;
+    background-position: 24px 0;
   }
 }
 

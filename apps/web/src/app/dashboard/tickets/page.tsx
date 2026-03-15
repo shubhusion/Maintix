@@ -20,7 +20,7 @@ import {
   useCreateTicket,
   type TicketQueryParams,
 } from '@/hooks/use-tickets';
-import { useCategories } from '@/hooks/use-categories';
+import { useCategories, useAllCategories } from '@/hooks/use-categories';
 import { createTicketSchema, type CreateTicketFormData } from '@/lib/validations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +57,10 @@ export default function TicketsPage() {
   const { data: properties } = useProperties();
   const { toast } = useToast();
 
+  const isTenant = user?.role === 'TENANT';
+  const isManager = user?.role === 'MANAGER';
+  const isTechnician = user?.role === 'TECHNICIAN';
+
   const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId || 'all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -91,7 +95,9 @@ export default function TicketsPage() {
     queryParams,
   );
 
-  const { data: categories } = useCategories(isAllProperties ? '' : selectedPropertyId);
+  const { data: categories } = isAllProperties
+    ? useAllCategories(allPropertyIds)
+    : useCategories(selectedPropertyId);
   const createTicket = useCreateTicket(isAllProperties ? '' : selectedPropertyId);
 
   const isLoading = isAllProperties ? isAllLoading : isSingleLoading;
@@ -153,13 +159,29 @@ export default function TicketsPage() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<CreateTicketFormData>({
+  } = useForm<CreateTicketFormData & { propertyId?: string }>({
     resolver: zodResolver(createTicketSchema),
+    defaultValues: {
+      priority: Priority.MEDIUM, // Default to MEDIUM for normal requests
+      propertyId: isAllProperties ? undefined : selectedPropertyId,
+    },
   });
 
-  const onSubmit = async (data: CreateTicketFormData) => {
+  const onSubmit = async (data: CreateTicketFormData & { propertyId?: string }) => {
     try {
-      await createTicket.mutateAsync({ ...data, files: selectedFiles });
+      // Determine which property to create the ticket under
+      const targetPropertyId = isAllProperties ? data.propertyId : selectedPropertyId;
+      
+      if (!targetPropertyId) {
+        toast({
+          title: 'Property required',
+          description: 'Please select a property for this ticket',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      await createTicket.mutateAsync({ ...data, propertyId: targetPropertyId, files: selectedFiles });
       toast({
         title: 'Ticket created successfully',
         description: selectedFiles.length > 0
@@ -218,14 +240,22 @@ export default function TicketsPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-muted-foreground">Maintenance requests across your properties.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+            {isTenant ? 'My Requests' : isTechnician ? 'My Tickets' : 'All Tickets'}
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+            {isTenant
+              ? 'Maintenance requests you have submitted.'
+              : isTechnician
+                ? 'Tickets assigned to you.'
+                : 'Maintenance requests across your properties.'}
+          </p>
         </div>
-        {user?.role === 'TENANT' && selectedPropertyId && !isAllProperties && (
-          <Button onClick={() => setDialogOpen(true)}>
+        {isTenant && (
+          <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             New Ticket
           </Button>
@@ -233,7 +263,7 @@ export default function TicketsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -248,7 +278,7 @@ export default function TicketsPage() {
           <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue placeholder="Select property" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[300px]">
             <SelectItem value="all">All Properties</SelectItem>
             {properties?.map((p) => (
               <SelectItem key={p.id} value={p.id}>
@@ -262,7 +292,7 @@ export default function TicketsPage() {
           <SelectTrigger className="w-full sm:w-[160px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[300px]">
             <SelectItem value="all">All Status</SelectItem>
             {Object.values(TicketStatus).map((s) => (
               <SelectItem key={s} value={s}>
@@ -276,7 +306,7 @@ export default function TicketsPage() {
           <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue placeholder="Priority" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[300px]">
             <SelectItem value="all">All Priority</SelectItem>
             {Object.values(Priority).map((p) => (
               <SelectItem key={p} value={p}>
@@ -298,7 +328,7 @@ export default function TicketsPage() {
             <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[300px]">
             <SelectItem value="createdAt:desc">Newest First</SelectItem>
             <SelectItem value="createdAt:asc">Oldest First</SelectItem>
             <SelectItem value="updatedAt:desc">Recently Updated</SelectItem>
@@ -339,7 +369,7 @@ export default function TicketsPage() {
             )}
           >
             <List className="h-4 w-4" />
-            List
+            <span className="hidden sm:inline">List</span>
           </button>
           <button
             onClick={() => setViewMode('board')}
@@ -351,7 +381,7 @@ export default function TicketsPage() {
             )}
           >
             <LayoutGrid className="h-4 w-4" />
-            Board
+            <span className="hidden sm:inline">Board</span>
           </button>
         </div>
       </div>
@@ -364,7 +394,7 @@ export default function TicketsPage() {
           showProperty={isAllProperties}
         />
       ) : (
-        <div className="h-[calc(100vh-24rem)]">
+        <div className="h-[calc(100vh-18rem)] sm:h-[calc(100vh-20rem)] lg:h-[calc(100vh-24rem)] overflow-x-auto">
           <TicketsKanbanBoard
             tickets={kanbanItems}
             onTicketClick={(ticketId) => {
@@ -374,8 +404,8 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* Create Ticket Dialog */}
-      {user?.role === 'TENANT' && (
+      {/* Create Ticket Dialog - Tenants Only */}
+      {isTenant && (
         <Dialog
           open={dialogOpen}
           onOpenChange={(open) => {
@@ -386,12 +416,36 @@ export default function TicketsPage() {
             }
           }}
         >
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-h-[90vh] sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Create Ticket</DialogTitle>
-              <DialogDescription>Submit a new maintenance request.</DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Create Ticket</DialogTitle>
+              <DialogDescription className="text-sm">Submit a new maintenance request.</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+              {/* Property Selector - Show when "All Properties" is selected and there are multiple properties */}
+              {isAllProperties && properties && properties.length > 0 && (
+                <div className="space-y-2">
+                  <Label>
+                    Property <span className="text-error-500">*</span>
+                  </Label>
+                  <Select onValueChange={(val) => setValue('propertyId', val, { shouldValidate: true })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select property" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {properties.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.propertyId && (
+                    <p className="text-sm text-error-500">{errors.propertyId.message}</p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="title">
                   Title <span className="text-error-500">*</span>
@@ -455,10 +509,10 @@ export default function TicketsPage() {
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="LOW">Low</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="URGENT">Urgent</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
@@ -545,11 +599,11 @@ export default function TicketsPage() {
                 )}
               </div>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                   {isSubmitting ? 'Creating...' : 'Create Ticket'}
                 </Button>
               </DialogFooter>

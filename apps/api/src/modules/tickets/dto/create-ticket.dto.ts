@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, MaxLength, MinLength, IsEnum } from 'class-validator';
+import { Priority } from '@maintix/shared-types';
 
 export class CreateTicketDto {
   @IsString()
@@ -16,4 +17,8 @@ export class CreateTicketDto {
   @IsUUID()
   @IsNotEmpty()
   categoryId: string;
+
+  @IsEnum(Priority)
+  @IsNotEmpty()
+  priority: Priority;
 }

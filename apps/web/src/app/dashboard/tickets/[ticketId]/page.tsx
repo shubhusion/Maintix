@@ -91,6 +91,19 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
   const technicians = members?.filter((m) => m.user.role === Role.TECHNICIAN) ?? [];
 
+  // Helper to get latest ticket version for optimistic concurrency
+  const getLatestVersion = async (): Promise<number> => {
+    try {
+      await queryClient.invalidateQueries({
+        queryKey: ['tickets', 'detail', ticketId],
+      });
+      const latest = queryClient.getQueryData(['tickets', 'detail', ticketId]) as any;
+      return latest?.version ?? ticket?.version ?? 0;
+    } catch {
+      return ticket?.version ?? 0;
+    }
+  };
+
   const handleAction = async (action: () => Promise<any>, successMsg: string) => {
     try {
       await action();
@@ -128,37 +141,38 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
   const StatusIcon = status?.icon ?? Clock;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Back button + header */}
-      <div className="flex items-start gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()} className="mt-1">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="mt-1 h-9 w-9 sm:h-10 sm:w-10 shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight">{ticket.title}</h1>
-            <Badge variant={status?.variant ?? 'secondary'} className="gap-1">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight break-words">{ticket.title}</h1>
+            <Badge variant={status?.variant ?? 'secondary'} className="gap-1 shrink-0 w-fit">
               <StatusIcon className="h-3 w-3" />
-              {status?.label ?? ticket.status}
+              <span className="hidden sm:inline">{status?.label ?? ticket.status}</span>
+              <span className="sm:hidden">{status?.label?.charAt(0) ?? ticket.status.charAt(0)}</span>
             </Badge>
             {ticket.priority === Priority.URGENT && (
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-error-500" />
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-error-500 shrink-0" />
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Created {new Date(ticket.createdAt).toLocaleDateString()} by{' '}
             {ticket.createdBy?.firstName} {ticket.createdBy?.lastName}
           </p>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Main content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Description */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Description</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm sm:text-base">Description</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="whitespace-pre-wrap text-sm max-w-prose">{ticket.description}</p>
@@ -168,8 +182,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
           {/* Cancellation reason */}
           {ticket.cancellationReason && (
             <Card className="border-error-500/30">
-              <CardHeader>
-                <CardTitle className="text-base text-error-500">Cancellation Reason</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm sm:text-base text-error-500">Cancellation Reason</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm max-w-prose">{ticket.cancellationReason}</p>
@@ -180,14 +194,15 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
           {/* Attachments */}
           {ticket.attachments && ticket.attachments.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm sm:text-base flex items-center gap-2">
                   <Paperclip className="h-4 w-4" />
-                  Attachments ({ticket.attachments.length})
+                  <span className="hidden sm:inline">Attachments ({ticket.attachments.length})</span>
+                  <span className="sm:hidden">({ticket.attachments.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                   {ticket.attachments.map(
                     (att: {
                       id: string;
@@ -265,15 +280,16 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
           {/* Workflow Actions */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Actions</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm sm:text-base">Actions</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               {/* Manager: Assign */}
               {isManager && ticket.status === TicketStatus.OPEN && (
-                <Button onClick={() => setAssignDialogOpen(true)} disabled={assignTicket.isPending}>
-                  <UserCheck className="mr-2 h-4 w-4" />
-                  Assign Technician
+                <Button onClick={() => setAssignDialogOpen(true)} disabled={assignTicket.isPending} className="h-10">
+                  <UserCheck className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Assign Technician</span>
+                  <span className="sm:hidden">Assign</span>
                 </Button>
               )}
 
@@ -281,19 +297,22 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               {isTechnician && isAssignee && ticket.status === TicketStatus.ASSIGNED && (
                 <Button
                   disabled={startWork.isPending}
-                  onClick={() =>
-                    handleAction(
+                  onClick={async () => {
+                    const version = await getLatestVersion();
+                    await handleAction(
                       () =>
                         startWork.mutateAsync({
                           ticketId: ticket.id,
-                          version: ticket.version,
+                          version,
                         }),
                       'Work started',
-                    )
-                  }
+                    );
+                  }}
+                  className="h-10"
                 >
-                  <Play className="mr-2 h-4 w-4" />
-                  {startWork.isPending ? 'Starting…' : 'Start Work'}
+                  <Play className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{startWork.isPending ? 'Starting…' : 'Start Work'}</span>
+                  <span className="sm:hidden">{startWork.isPending ? 'Starting…' : 'Start'}</span>
                 </Button>
               )}
 
@@ -301,19 +320,22 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               {isTechnician && isAssignee && ticket.status === TicketStatus.IN_PROGRESS && (
                 <Button
                   disabled={submitCompletion.isPending}
-                  onClick={() =>
-                    handleAction(
+                  onClick={async () => {
+                    const version = await getLatestVersion();
+                    await handleAction(
                       () =>
                         submitCompletion.mutateAsync({
                           ticketId: ticket.id,
-                          version: ticket.version,
+                          version,
                         }),
                       'Submitted for approval',
-                    )
-                  }
+                    );
+                  }}
+                  className="h-10"
                 >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  {submitCompletion.isPending ? 'Submitting…' : 'Submit Completion'}
+                  <CheckCircle className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{submitCompletion.isPending ? 'Submitting…' : 'Submit Completion'}</span>
+                  <span className="sm:hidden">{submitCompletion.isPending ? 'Submitting…' : 'Complete'}</span>
                 </Button>
               )}
 
@@ -321,20 +343,22 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               {isManager && ticket.status === TicketStatus.AWAITING_APPROVAL && (
                 <Button
                   disabled={approveTicket.isPending}
-                  onClick={() =>
-                    handleAction(
+                  onClick={async () => {
+                    const version = await getLatestVersion();
+                    await handleAction(
                       () =>
                         approveTicket.mutateAsync({
                           ticketId: ticket.id,
-                          version: ticket.version,
+                          version,
                         }),
                       'Ticket approved',
-                    )
-                  }
-                  className="bg-success-600 hover:bg-success-600/90"
+                    );
+                  }}
+                  className="bg-success-600 hover:bg-success-600/90 h-10"
                 >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  {approveTicket.isPending ? 'Approving…' : 'Approve'}
+                  <CheckCircle className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{approveTicket.isPending ? 'Approving…' : 'Approve'}</span>
+                  <span className="sm:hidden">{approveTicket.isPending ? 'Approving…' : 'OK'}</span>
                 </Button>
               )}
 
@@ -346,8 +370,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
                     variant="outline"
                     onClick={() => setPriorityDialogOpen(true)}
                     disabled={updatePriority.isPending}
+                    className="h-10"
                   >
-                    Update Priority
+                    <span className="hidden sm:inline">Update Priority</span>
+                    <span className="sm:hidden">Priority</span>
                   </Button>
                 )}
 
@@ -397,31 +423,31 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
           <ActivityTimeline ticketId={ticketId} />
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
+        {/* Sidebar - moves below on mobile */}
+        <div className="space-y-4 order-first lg:order-last">
           <Card>
             <CardContent className="space-y-4 pt-6">
               <div className="flex items-center gap-3">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <div>
+                <Tag className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Category</p>
-                  <p className="text-sm font-medium">{ticket.category?.name}</p>
+                  <p className="text-sm font-medium truncate">{ticket.category?.name}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                <div>
+                <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Priority</p>
-                  <p className="text-sm font-medium capitalize">{ticket.priority.toLowerCase()}</p>
+                  <p className="text-sm font-medium capitalize truncate">{ticket.priority.toLowerCase()}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <div>
+                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Assigned To</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium truncate">
                     {ticket.assignedTo
                       ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}`
                       : 'Unassigned'}
@@ -430,10 +456,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               </div>
 
               <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <div>
+                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Last Updated</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium truncate">
                     {new Date(ticket.updatedAt).toLocaleString()}
                   </p>
                 </div>
@@ -449,16 +475,16 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
       {/* Assign Dialog */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Assign Technician</DialogTitle>
-            <DialogDescription>Choose a technician to handle this ticket.</DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Assign Technician</DialogTitle>
+            <DialogDescription className="text-sm">Choose a technician to handle this ticket.</DialogDescription>
           </DialogHeader>
           <Select value={assignTechId} onValueChange={setAssignTechId}>
             <SelectTrigger>
               <SelectValue placeholder="Select a technician" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px]">
               {technicians.map((m) => (
                 <SelectItem key={m.userId} value={m.userId}>
                   {m.user.firstName} {m.user.lastName}
@@ -466,26 +492,41 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               ))}
             </SelectContent>
           </Select>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
+            <Button variant="outline" onClick={() => setAssignDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button
-              disabled={!assignTechId}
+              disabled={!assignTechId || assignTicket.isPending}
               onClick={async () => {
-                await handleAction(
-                  () =>
-                    assignTicket.mutateAsync({
-                      ticketId: ticket.id,
-                      technicianId: assignTechId,
-                      version: ticket.version,
-                    }),
-                  'Technician assigned',
-                );
-                setAssignDialogOpen(false);
+                try {
+                  // Refetch ticket to get latest version before assignment
+                  const latestTicket = await queryClient.fetchQuery({
+                    queryKey: ['tickets', 'detail', ticketId],
+                    queryFn: async () => {
+                      // Invalidate and refetch
+                      await queryClient.invalidateQueries({
+                        queryKey: ['tickets', 'detail', ticketId],
+                      });
+                      // Get the fresh data from cache
+                      return queryClient.getQueryData(['tickets', 'detail', ticketId]);
+                    },
+                  });
+
+                  await assignTicket.mutateAsync({
+                    ticketId: ticket.id,
+                    technicianId: assignTechId,
+                    version: (latestTicket as any)?.version ?? ticket.version,
+                  });
+                  toast({ title: 'Technician assigned successfully' });
+                  setAssignDialogOpen(false);
+                } catch (err: unknown) {
+                  const message = err instanceof Error ? err.message : 'An error occurred';
+                  toast({ title: 'Error', description: message, variant: 'destructive' });
+                }
               }}
             >
-              Assign
+              {assignTicket.isPending ? 'Assigning...' : 'Assign'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -509,27 +550,29 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               rows={3}
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)} className="w-full sm:w-auto">
               Go Back
             </Button>
             <Button
               variant="destructive"
-              disabled={cancelReason.length < 5}
+              disabled={cancelReason.length < 5 || cancelTicket.isPending}
               onClick={async () => {
+                const version = await getLatestVersion();
                 await handleAction(
                   () =>
                     cancelTicket.mutateAsync({
                       ticketId: ticket.id,
                       reason: cancelReason,
-                      version: ticket.version,
+                      version,
                     }),
                   'Ticket cancelled',
                 );
                 setCancelDialogOpen(false);
               }}
+              className="w-full sm:w-auto"
             >
-              Cancel Ticket
+              {cancelTicket.isPending ? 'Cancelling...' : 'Cancel Ticket'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -537,16 +580,16 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
       {/* Priority Dialog */}
       <Dialog open={priorityDialogOpen} onOpenChange={setPriorityDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Update Priority</DialogTitle>
-            <DialogDescription>Change the priority level of this ticket.</DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Update Priority</DialogTitle>
+            <DialogDescription className="text-sm">Change the priority level of this ticket.</DialogDescription>
           </DialogHeader>
           <Select value={selectedPriority} onValueChange={setSelectedPriority}>
             <SelectTrigger>
               <SelectValue placeholder="Select priority" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px]">
               {Object.values(Priority).map((p) => (
                 <SelectItem key={p} value={p}>
                   {p.charAt(0) + p.slice(1).toLowerCase()}
@@ -554,26 +597,28 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
               ))}
             </SelectContent>
           </Select>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPriorityDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
+            <Button variant="outline" onClick={() => setPriorityDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button
-              disabled={!selectedPriority}
+              disabled={!selectedPriority || updatePriority.isPending}
               onClick={async () => {
+                const version = await getLatestVersion();
                 await handleAction(
                   () =>
                     updatePriority.mutateAsync({
                       ticketId: ticket.id,
                       priority: selectedPriority as Priority,
-                      version: ticket.version,
+                      version,
                     }),
                   'Priority updated',
                 );
                 setPriorityDialogOpen(false);
               }}
+              className="w-full sm:w-auto"
             >
-              Update
+              {updatePriority.isPending ? 'Updating...' : 'Update'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -581,16 +626,16 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
       {/* Reassign Dialog */}
       <Dialog open={reassignDialogOpen} onOpenChange={setReassignDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Reassign Ticket</DialogTitle>
-            <DialogDescription>Select a different technician for this ticket.</DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">Reassign Ticket</DialogTitle>
+            <DialogDescription className="text-sm">Select a different technician for this ticket.</DialogDescription>
           </DialogHeader>
           <Select value={reassignTechId} onValueChange={setReassignTechId}>
             <SelectTrigger>
               <SelectValue placeholder="Select new technician" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-[300px]">
               {technicians
                 .filter((m) => m.userId !== ticket.assignedTo?.id)
                 .map((m) => (
@@ -600,26 +645,28 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
                 ))}
             </SelectContent>
           </Select>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setReassignDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 pt-3 sm:pt-4">
+            <Button variant="outline" onClick={() => setReassignDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button
-              disabled={!reassignTechId}
+              disabled={!reassignTechId || reassignTicket.isPending}
               onClick={async () => {
+                const version = await getLatestVersion();
                 await handleAction(
                   () =>
                     reassignTicket.mutateAsync({
                       ticketId: ticket.id,
                       technicianId: reassignTechId,
-                      version: ticket.version,
+                      version,
                     }),
                   'Ticket reassigned',
                 );
                 setReassignDialogOpen(false);
               }}
+              className="w-full sm:w-auto"
             >
-              Reassign
+              {reassignTicket.isPending ? 'Reassigning...' : 'Reassign'}
             </Button>
           </DialogFooter>
         </DialogContent>

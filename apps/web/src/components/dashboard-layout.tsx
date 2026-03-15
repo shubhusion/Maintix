@@ -248,33 +248,38 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex h-16 items-center gap-4 border-b bg-card px-4 lg:px-6">
+        <header className="flex h-16 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 lg:px-6">
+          {/* Mobile menu button */}
           <button
-            className="lg:hidden"
+            className="lg:hidden -ml-2 p-2"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open sidebar"
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-5 w-5" />
           </button>
 
-          {/* Breadcrumbs */}
-          <EnhancedBreadcrumbs />
+          {/* Breadcrumbs - hidden on small screens */}
+          <div className="hidden sm:block flex-1 min-w-0">
+            <EnhancedBreadcrumbs />
+          </div>
 
           {/* Mobile page title */}
-          <h1 className="text-lg font-semibold sm:hidden truncate">Dashboard</h1>
+          <h1 className="text-base sm:text-lg font-semibold sm:hidden truncate flex-1">
+            Dashboard
+          </h1>
 
           <div className="flex-1" />
 
-          {/* Command Palette Trigger */}
+          {/* Command Palette Trigger - hidden on mobile */}
           <button
             onClick={() =>
               document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
             }
-            className="hidden sm:flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            className="hidden md:flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
           >
             <Search className="h-3.5 w-3.5" />
-            <span>Search...</span>
-            <kbd className="ml-2 rounded border bg-background px-1.5 py-0.5 font-mono text-[10px]">
+            <span className="hidden lg:inline">Search...</span>
+            <kbd className="rounded border bg-background px-1.5 py-0.5 font-mono text-[10px]">
               ⌘K
             </kbd>
           </button>
@@ -288,11 +293,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+              className="h-10 w-10"
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span
-                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+                  className="absolute -right-0.5 -top-0.5 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-primary text-[9px] sm:text-[10px] font-bold text-primary-foreground"
                   aria-hidden="true"
                 >
                   {unreadCount > 99 ? '99+' : unreadCount}
@@ -303,7 +309,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}

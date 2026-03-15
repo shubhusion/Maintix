@@ -59,3 +59,6 @@ docker-compose.override.yml
 *.pem
 *.tgz
 .vercel
+setup-gcp.ps1
+*.ps1
+github-actions-key.json

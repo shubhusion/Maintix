@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, Ticket, Users, Clock, ArrowRight } from 'lucide-react';
+import { Building2, Ticket, Users, Clock, ArrowRight, Wrench } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -28,9 +28,26 @@ export default function DashboardPage() {
   );
   const { data: notificationsData } = useNotifications();
 
-  const openCount = tickets.filter((t) => t.status === TicketStatus.OPEN).length;
-  const inProgressCount = tickets.filter((t) => t.status === TicketStatus.IN_PROGRESS).length;
-  const awaitingCount = tickets.filter((t) => t.status === TicketStatus.AWAITING_APPROVAL).length;
+  const isManager = user?.role === Role.MANAGER;
+  const isTechnician = user?.role === Role.TECHNICIAN;
+  const isTenant = user?.role === Role.TENANT;
+
+  // Filter tickets based on role
+  const filteredTickets = tickets.filter((t) => {
+    if (isTechnician) {
+      return t.assignedTo?.id === user?.id;
+    }
+    if (isTenant) {
+      return t.createdBy?.id === user?.id;
+    }
+    return true; // Managers see all
+  });
+
+  const openCount = filteredTickets.filter((t) => t.status === TicketStatus.OPEN).length;
+  const inProgressCount = filteredTickets.filter((t) => t.status === TicketStatus.IN_PROGRESS).length;
+  const awaitingCount = filteredTickets.filter((t) => t.status === TicketStatus.AWAITING_APPROVAL).length;
+  const myAssignedCount = isTechnician ? filteredTickets.length : 0;
+  const myRequestsCount = isTenant ? filteredTickets.length : 0;
 
   // Generate time-aware greeting
   const getGreeting = () => {
@@ -53,15 +70,21 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 md:space-y-8">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
           {getGreeting()}, {user?.firstName}
           {user?.role === Role.MANAGER ? ' 👋' : ''}
         </h1>
-        <p className="text-muted-foreground">
-          Here&apos;s an overview of your maintenance platform.
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          {isManager
+            ? "Here's an overview of your maintenance platform."
+            : isTechnician
+              ? "Here are your assigned maintenance tasks."
+              : isTenant
+                ? "Here's an overview of your maintenance requests."
+                : "Here's an overview of your maintenance platform."}
         </p>
       </div>
 
@@ -91,29 +114,99 @@ export default function DashboardPage() {
           </TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <StatCard
-              title="Open Tickets"
-              value={ticketsLoading ? '—' : openCount}
-              description="Across all properties"
-              icon={<Ticket className="h-4 w-4" />}
-              iconBgColor="bg-warning-500/10"
-              iconColor="text-warning-500"
-              progress={{
-                current: openCount,
-                total: tickets.length,
-                label: `${tickets.length > 0 ? Math.round((openCount / tickets.length) * 100) : 0}% of total`,
-              }}
-            />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Tickets with Open status across all properties</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {user?.role === Role.MANAGER && (
+        {/* Role-specific ticket stats */}
+        {isTenant ? (
           <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <StatCard
+                  title="My Requests"
+                  value={ticketsLoading ? '—' : myRequestsCount}
+                  description="Total requests"
+                  icon={<Ticket className="h-4 w-4" />}
+                  iconBgColor="bg-success-500/10"
+                  iconColor="text-success-600"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Total maintenance requests you have created</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <StatCard
+                  title="Open Requests"
+                  value={ticketsLoading ? '—' : openCount}
+                  description="Pending resolution"
+                  icon={<Clock className="h-4 w-4" />}
+                  iconBgColor="bg-warning-500/10"
+                  iconColor="text-warning-500"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Your requests that are still open</p>
+              </TooltipContent>
+            </Tooltip>
+          </>
+        ) : isTechnician ? (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <StatCard
+                  title="My Tickets"
+                  value={ticketsLoading ? '—' : myAssignedCount}
+                  description="Assigned to you"
+                  icon={<Wrench className="h-4 w-4" />}
+                  iconBgColor="bg-success-500/10"
+                  iconColor="text-success-600"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Total tickets assigned to you</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <StatCard
+                  title="In Progress"
+                  value={ticketsLoading ? '—' : inProgressCount}
+                  description="Active work"
+                  icon={<Clock className="h-4 w-4" />}
+                  iconBgColor="bg-accent-500/10"
+                  iconColor="text-accent-500"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Tickets you're currently working on</p>
+              </TooltipContent>
+            </Tooltip>
+          </>
+        ) : (
+          <>
+            {/* Manager stats */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <StatCard
+                  title="Open Tickets"
+                  value={ticketsLoading ? '—' : openCount}
+                  description="Across all properties"
+                  icon={<Ticket className="h-4 w-4" />}
+                  iconBgColor="bg-warning-500/10"
+                  iconColor="text-warning-500"
+                  progress={{
+                    current: openCount,
+                    total: filteredTickets.length,
+                    label: `${filteredTickets.length > 0 ? Math.round((openCount / filteredTickets.length) * 100) : 0}% of total`,
+                  }}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Tickets with Open status across all properties</p>
+              </TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <StatCard
@@ -162,9 +255,9 @@ export default function DashboardPage() {
 
       {/* Properties List */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Your Properties</h2>
+        <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold">Your Properties</h2>
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <CardHeader>
@@ -177,7 +270,7 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : properties && properties.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => {
               const propertyTickets = tickets.filter((t) => t.property?.id === property.id);
               const openTickets = propertyTickets.filter(
@@ -187,20 +280,20 @@ export default function DashboardPage() {
               return (
                 <Link key={property.id} href={`/dashboard/properties/${property.id}`}>
                   <Card className="group cursor-pointer transition-all duration-300 hover:border-primary/30 hover:shadow-md">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center justify-between">
-                        {property.name}
-                        <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" />
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm sm:text-base flex items-center justify-between">
+                        <span className="truncate">{property.name}</span>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 shrink-0" />
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">{property.address}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{property.address}</p>
                       {openTickets > 0 && (
-                        <div className="mt-3 flex items-center gap-2">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-warning-500/10 text-xs font-medium text-warning-600">
+                        <div className="mt-2 sm:mt-3 flex items-center gap-1.5 sm:gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-warning-500/10 text-xs font-medium text-warning-600 shrink-0">
                             {openTickets}
                           </span>
-                          <span className="text-xs text-muted-foreground">open tickets</span>
+                          <span className="text-xs text-muted-foreground truncate">open tickets</span>
                         </div>
                       )}
                     </CardContent>
@@ -211,19 +304,19 @@ export default function DashboardPage() {
           </div>
         ) : (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-                <Building2 className="h-8 w-8 text-muted-foreground/50" />
+            <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+              <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-muted mb-3 sm:mb-4">
+                <Building2 className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground/50" />
               </div>
-              <h3 className="mb-1 text-lg font-medium">No properties yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="mb-1 text-base sm:text-lg font-medium text-center px-4">No properties yet</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 text-center px-4">
                 {user?.role === Role.MANAGER
                   ? 'Create your first property to get started.'
                   : 'Ask your manager to add you to a property.'}
               </p>
               {user?.role === Role.MANAGER && (
                 <Link href="/dashboard/properties">
-                  <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                  <button className="rounded-lg bg-primary px-4 py-2 text-xs sm:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
                     Add Property
                   </button>
                 </Link>

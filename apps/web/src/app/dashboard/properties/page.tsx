@@ -124,14 +124,14 @@ export default function PropertiesPage() {
   const isManager = user?.role === Role.MANAGER;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Properties</h1>
-          <p className="text-muted-foreground">Manage your buildings and units.</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Properties</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your buildings and units.</p>
         </div>
         {isManager && (
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Add Property
           </Button>
@@ -139,27 +139,27 @@ export default function PropertiesPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-[140px] rounded-lg" />
           ))}
         </div>
       ) : properties && properties.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {properties.map((property) => (
             <div key={property.id} className="group relative">
               <Link href={`/dashboard/properties/${property.id}`}>
                 <Card className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md">
-                  <CardHeader>
-                    <CardTitle className="text-base">{property.name}</CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm sm:text-base truncate">{property.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{property.address}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{property.address}</p>
                   </CardContent>
                 </Card>
               </Link>
               {isManager && (
-                <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 sm:opacity-100 sm:group-hover:opacity-100">
                   <Button
                     variant="ghost"
                     size="icon"

@@ -36,11 +36,12 @@ export class TicketsController {
   // === Property-scoped routes (require PropertyGuard) ===
 
   @Post('properties/:propertyId/tickets')
+  @Roles(Role.TENANT)
   @UseGuards(PropertyGuard)
-  @ApiOperation({ summary: 'Create a ticket' })
+  @ApiOperation({ summary: 'Create a ticket (tenants only)' })
   @ApiResponse({ status: 201, description: 'Ticket created' })
   @ApiResponse({ status: 400, description: 'Validation error' })
-  @ApiResponse({ status: 403, description: 'Not a member of this property' })
+  @ApiResponse({ status: 403, description: 'Forbidden — only tenants can create tickets' })
   create(
     @Param('propertyId', ParseUUIDPipe) propertyId: string,
     @Body() dto: CreateTicketDto,
@@ -51,11 +52,15 @@ export class TicketsController {
 
   @Get('properties/:propertyId/tickets')
   @UseGuards(PropertyGuard)
-  @ApiOperation({ summary: 'List tickets for a property' })
-  @ApiResponse({ status: 200, description: 'Paginated list of tickets' })
+  @ApiOperation({ summary: 'List tickets for a property (role-filtered)' })
+  @ApiResponse({ status: 200, description: 'Paginated list of tickets filtered by user role' })
   @ApiResponse({ status: 403, description: 'Not a member of this property' })
-  findAll(@Param('propertyId', ParseUUIDPipe) propertyId: string, @Query() query: TicketQueryDto) {
-    return this.ticketsService.findAllByProperty(propertyId, query);
+  findAll(
+    @Param('propertyId', ParseUUIDPipe) propertyId: string,
+    @Query() query: TicketQueryDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.ticketsService.findAllByProperty(propertyId, query, user.sub, user.role as Role);
   }
 
   // === Ticket-scoped routes ===

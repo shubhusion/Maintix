@@ -1,10 +1,11 @@
 'use client';
 
-import { Ticket, ArrowRight } from 'lucide-react';
+import { Ticket as TicketIcon, ArrowRight, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useTickets } from '@/hooks/use-tickets';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { statusConfig } from '@/lib/ticket-config';
 import { Priority } from '@maintix/shared-types';
 import { formatDistanceToNow } from 'date-fns';
@@ -21,11 +22,17 @@ export function PropertyTicketsTab({ propertyId }: PropertyTicketsTabProps) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Ticket className="mb-4 h-12 w-12 text-muted-foreground/50" />
+          <TicketIcon className="mb-4 h-12 w-12 text-muted-foreground/50" />
           <h3 className="mb-1 text-lg font-medium">No tickets yet</h3>
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-sm text-muted-foreground text-center mb-4">
             Tickets created for this property will appear here.
           </p>
+          <Link href={`/dashboard/tickets?propertyId=${propertyId}`}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Ticket
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     );

@@ -52,7 +52,7 @@ export class TicketsService {
         propertyId,
         createdById: userId,
         status: TicketStatus.OPEN,
-        priority: Priority.LOW,
+        priority: dto.priority,
       },
       include: this.ticketIncludes(),
     });
@@ -72,11 +72,26 @@ export class TicketsService {
 
   // === READ ===
 
-  async findAllByProperty(propertyId: string, query: TicketQueryDto) {
+  async findAllByProperty(
+    propertyId: string,
+    query: TicketQueryDto,
+    userId: string,
+    userRole: Role,
+  ) {
     const where: Record<string, unknown> = {
       propertyId,
       deletedAt: null,
     };
+
+    // Role-based filtering
+    if (userRole === Role.TECHNICIAN) {
+      // Technicians only see tickets assigned to them
+      where.assignedToId = userId;
+    } else if (userRole === Role.TENANT) {
+      // Tenants only see tickets they created
+      where.createdById = userId;
+    }
+    // Managers see all tickets (no additional filter)
 
     if (query.search) {
       where.OR = [

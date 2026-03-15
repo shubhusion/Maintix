@@ -3,7 +3,7 @@
 import { useState, useDeferredValue } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Shield, Search } from 'lucide-react';
+import { Plus, Shield, Search, Eye, EyeOff } from 'lucide-react';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, type User } from '@/hooks/use-users';
 import { useAuth } from '@/contexts/auth-context';
 import { createUserSchema } from '@/lib/validations';
@@ -54,6 +54,8 @@ export default function UsersPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: string; firstName: string; lastName: string; email: string; role: Role } | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   // Create hooks at component level
   const updateUser = useUpdateUser(selectedUser?.id || '');
@@ -246,12 +248,27 @@ export default function UsersPage() {
               <Label htmlFor="password">
                 Password <span className="text-error-500">*</span>
               </Label>
-              <Input
-                id="password"
-                type="password"
-                {...form.register('password')}
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  {...form.register('password')}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 Must be at least 8 characters, with an uppercase letter and a number.
               </p>

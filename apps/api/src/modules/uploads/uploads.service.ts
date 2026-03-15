@@ -127,15 +127,40 @@ export class UploadsService {
       });
 
     if (uploadError) {
+      this.logger.error(`Upload error: ${uploadError.message}`, uploadError.stack);
+      this.logger.error(`Storage path: ${storagePath}`);
+      this.logger.error(`Bucket: ${STORAGE_BUCKET}`);
       throw new BusinessException(
-        'Failed to upload file',
+        `Failed to upload file: ${uploadError.message}`,
         ErrorCode.INTERNAL_ERROR,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
-    // Get public URL
-    const { data: urlData } = this.supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath);
+    // Get public URL (or signed URL for private buckets)
+    let publicUrl: string;
+    
+    // For private buckets, generate a signed URL (valid for 1 year)
+    // This is more reliable than getPublicUrl which doesn't work for private buckets
+    const { data: signedData } = await this.supabase.storage
+      .from(STORAGE_BUCKET)
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 365); // 1 year
+    
+    if (signedData?.signedUrl) {
+      publicUrl = signedData.signedUrl;
+    } else {
+      // Fallback to public URL if signed URL generation fails
+      const { data: urlData } = this.supabase.storage.from(STORAGE_BUCKET).getPublicUrl(storagePath);
+      if (urlData.publicUrl) {
+        publicUrl = urlData.publicUrl;
+      } else {
+        throw new BusinessException(
+          'Failed to generate file URL',
+          ErrorCode.INTERNAL_ERROR,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
 
     // Create attachment record
     const attachment = await this.prisma.ticketAttachment.create({
@@ -145,7 +170,7 @@ export class UploadsService {
         fileName: file.originalname,
         fileSize: fileSize,
         mimeType: file.mimetype,
-        url: urlData.publicUrl,
+        url: publicUrl,
       },
     });
 

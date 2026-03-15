@@ -47,18 +47,18 @@ export function TicketStatusChart({ tickets }: TicketStatusChartProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Ticket Distribution</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm sm:text-base">Ticket Distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={240} className="sm:h-[280px]">
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
+              innerRadius={50}
+              outerRadius={80}
               paddingAngle={2}
               dataKey="value"
             >
@@ -77,9 +77,10 @@ export function TicketStatusChart({ tickets }: TicketStatusChartProps) {
                 border: '1px solid hsl(var(--border))',
                 backgroundColor: 'hsl(var(--popover))',
                 color: 'hsl(var(--popover-foreground))',
+                fontSize: '12px',
               }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
           </PieChart>
         </ResponsiveContainer>
       </CardContent>

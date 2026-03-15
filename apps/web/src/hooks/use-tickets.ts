@@ -117,11 +117,17 @@ export function useCreateTicket(propertyId: string) {
       title: string;
       description: string;
       categoryId: string;
+      priority?: Priority;
+      propertyId?: string;
       files?: File[];
     }) => {
-      const { files, ...ticketData } = data;
+      // Use provided propertyId or fall back to the hook's propertyId
+      const targetPropertyId = data.propertyId || propertyId;
+
+      // Extract propertyId and files from the data - don't send propertyId in body
+      const { propertyId: _propertyId, files, ...ticketData } = data;
       const ticket = await api.post<Ticket>(
-        `/properties/${propertyId}/tickets`,
+        `/properties/${targetPropertyId}/tickets`,
         ticketData,
       );
 
@@ -131,7 +137,7 @@ export function useCreateTicket(propertyId: string) {
           const formData = new FormData();
           formData.append('file', file);
           await api.upload(
-            `/properties/${propertyId}/tickets/${ticket.id}/attachments`,
+            `/properties/${targetPropertyId}/tickets/${ticket.id}/attachments`,
             formData,
           );
         }
@@ -139,8 +145,9 @@ export function useCreateTicket(propertyId: string) {
 
       return ticket;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets', propertyId] });
+    onSuccess: (_, variables) => {
+      const targetPropertyId = variables.propertyId || propertyId;
+      queryClient.invalidateQueries({ queryKey: ['tickets', targetPropertyId] });
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
     },
   });
