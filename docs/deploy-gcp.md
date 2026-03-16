@@ -1,6 +1,6 @@
 # 🚀 Deploy Backend to Google Cloud Run - Complete Guide
 
-> **Database:** This guide uses **Supabase** (managed PostgreSQL). 
+> **Database:** This guide uses **Supabase** (managed PostgreSQL).
 > See [Setup Supabase](./setup-supabase.md) for database configuration.
 
 ---
@@ -16,10 +16,11 @@
    - No credit card required for free tier
 
 3. **Install Google Cloud CLI**
+
    ```bash
    # Windows (Chocolatey)
    choco install google-cloud-cli
-   
+
    # Or download from:
    # https://cloud.google.com/sdk/docs/install
    ```
@@ -115,7 +116,7 @@ gcloud run services update maintix-api \
 
 ```bash
 # From project root
-cd packages/database
+cd apps/api
 
 # Generate Prisma client
 pnpm prisma generate
@@ -182,20 +183,20 @@ gcloud run services update maintix-api \
 
 ### Required Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection | `postgresql://...` |
-| `JWT_SECRET` | JWT signing key | `your-secret-key` |
-| `JWT_EXPIRES_IN` | Token expiry | `7d` |
-| `PORT` | Server port | `3001` |
+| Variable         | Description           | Example            |
+| ---------------- | --------------------- | ------------------ |
+| `DATABASE_URL`   | PostgreSQL connection | `postgresql://...` |
+| `JWT_SECRET`     | JWT signing key       | `your-secret-key`  |
+| `JWT_EXPIRES_IN` | Token expiry          | `7d`               |
+| `PORT`           | Server port           | `3001`             |
 
 ### Optional Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `CORS_ORIGIN` | Allowed CORS origin | `*` |
-| `NODE_ENV` | Environment | `production` |
-| `LOG_LEVEL` | Logging level | `info` |
+| Variable      | Description         | Default      |
+| ------------- | ------------------- | ------------ |
+| `CORS_ORIGIN` | Allowed CORS origin | `*`          |
+| `NODE_ENV`    | Environment         | `production` |
+| `LOG_LEVEL`   | Logging level       | `info`       |
 
 ### Set Variables
 
@@ -216,23 +217,24 @@ gcloud run services update maintix-api \
 
 ### Cloud Run (Backend)
 
-| Resource | Free Tier | Your Usage | Cost |
-|----------|-----------|------------|------|
-| Requests | 2M/month | ~100K | $0 ✅ |
-| CPU time | 180K vCPU-sec | ~10K | $0 ✅ |
-| Memory | 360K GiB-sec | ~20K | $0 ✅ |
-| **Total** | | | **$0/month** ✅ |
+| Resource  | Free Tier     | Your Usage | Cost            |
+| --------- | ------------- | ---------- | --------------- |
+| Requests  | 2M/month      | ~100K      | $0 ✅           |
+| CPU time  | 180K vCPU-sec | ~10K       | $0 ✅           |
+| Memory    | 360K GiB-sec  | ~20K       | $0 ✅           |
+| **Total** |               |            | **$0/month** ✅ |
 
 ### Supabase (Database)
 
-| Plan | Database | Bandwidth | Price |
-|------|----------|-----------|-------|
-| **Free** | 500 MB | Unlimited | $0 ✅ |
-| **Pro** | 8 GB | Unlimited | $25/month |
+| Plan     | Database | Bandwidth | Price     |
+| -------- | -------- | --------- | --------- |
+| **Free** | 500 MB   | Unlimited | $0 ✅     |
+| **Pro**  | 8 GB     | Unlimited | $25/month |
 
 **For Competition:** Free tier is perfect! (500MB = ~50,000+ tickets)
 
 ### Total Monthly Cost
+
 - **Cloud Run:** $0 (free tier)
 - **Supabase:** $0 (free tier)
 - **Total:** **$0/month** 🎉

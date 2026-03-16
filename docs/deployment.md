@@ -32,8 +32,8 @@
 **Build order** (handled by Turborepo):
 
 ```
-@maintix/shared-types  →  @maintix/database  →  @maintix/api + @maintix/web
-       (tsc)              (prisma generate)       (nest build)   (next build)
+apps/api/shared-types  →  apps/api (nest build)
+apps/web/shared-types  →  apps/web (next build)
 ```
 
 ---
@@ -205,13 +205,13 @@ After deployment, note the **Service URL** from the output — you'll need it fo
 1. Go to [vercel.com/new](https://vercel.com/new) and import the `shubhusion/Maintix` GitHub repo.
 2. Configure the project:
 
-| Setting          | Value                                                |
-| ---------------- | ---------------------------------------------------- |
-| Framework Preset | Next.js                                              |
-| Root Directory   | `apps/web`                                           |
-| Build Command    | `cd ../.. && pnpm turbo build --filter=@maintix/web` |
-| Install Command  | `pnpm install`                                       |
-| Output Directory | (leave default)                                      |
+| Setting          | Value                                                   |
+| ---------------- | ------------------------------------------------------- |
+| Framework Preset | Next.js                                                 |
+| Root Directory   | `apps/web`                                              |
+| Build Command    | `cd ../.. && pnpm install && cd apps/web && pnpm build` |
+| Install Command  | `pnpm install`                                          |
+| Output Directory | (leave default)                                         |
 
 3. Add environment variable:
 
@@ -313,7 +313,7 @@ pnpm db:migrate        # Dev: generates + applies migration
 
 ```bash
 # Production: applies pending migrations only (safe, no generation)
-pnpm --filter @maintix/database db:migrate:deploy
+cd apps/api && pnpm prisma migrate deploy
 ```
 
 ### Automated Migration (in CI/CD)
@@ -341,7 +341,7 @@ DATABASE_URL="<production-pooled-url>" pnpm db:seed
 
 ### Workflow: Deploy API (`.github/workflows/deploy-api.yml`)
 
-**Trigger**: Push to `main` with changes in `apps/api/`, `packages/`, or `pnpm-lock.yaml`.
+**Trigger**: Push to `main` with changes in `apps/api/` or `pnpm-lock.yaml`.
 
 | Job       | Steps                                                                        | Purpose                     |
 | --------- | ---------------------------------------------------------------------------- | --------------------------- |
@@ -446,7 +446,7 @@ gcloud run services update maintix-api \
 
 ```bash
 DATABASE_URL="<direct-url>" npx prisma migrate status \
-  --schema=packages/database/prisma/schema.prisma
+  --schema=apps/api/prisma/schema.prisma
 ```
 
 ---

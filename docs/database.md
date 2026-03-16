@@ -1,6 +1,6 @@
 # Database Schema
 
-Maintix uses **PostgreSQL 16** with **Prisma 6** as the ORM. The schema is defined in `packages/database/prisma/schema.prisma`.
+Maintix uses **PostgreSQL 16** with **Prisma 6** as the ORM. The schema is defined in `apps/api/prisma/schema.prisma`.
 
 ## Entity Relationship Diagram
 
@@ -270,7 +270,7 @@ User notifications triggered by ticket events.
 
 ### Seed Data
 
-The seed script (`packages/database/prisma/seed.ts`) creates three users, a property, memberships, and default categories:
+The seed script (`apps/api/prisma/seed.ts`) creates three users, a property, memberships, and default categories:
 
 **Users:**
 

@@ -65,6 +65,7 @@ gcloud run services update maintix-api \
 ```
 
 Or via Cloud Console:
+
 1. Cloud Run → maintix-api
 2. Edit & Deploy New Revision
 3. Variables & Secrets → Add variable
@@ -77,7 +78,7 @@ Or via Cloud Console:
 
 ```bash
 # From project root
-cd packages/database
+cd apps/api
 
 # Generate Prisma client
 pnpm prisma generate
@@ -134,6 +135,7 @@ gcloud run services update maintix-api \
 ### 3. Enable SSL (Required for Production)
 
 Add to connection string:
+
 ```
 DATABASE_URL="postgresql://...?sslmode=require"
 ```
@@ -141,6 +143,7 @@ DATABASE_URL="postgresql://...?sslmode=require"
 ### 4. Restrict Database Access
 
 In Supabase Dashboard:
+
 1. Go to **Settings** → **Database**
 2. Under **Connection security**, enable:
    - ✅ Require SSL
@@ -151,11 +154,11 @@ In Supabase Dashboard:
 
 ## 💰 Supabase Pricing
 
-| Plan | Database Size | Bandwidth | Price |
-|------|--------------|-----------|-------|
-| **Free** | 500 MB | Unlimited | $0 ✅ |
-| **Pro** | 8 GB | Unlimited | $25/month |
-| **Team** | Unlimited | Unlimited | $25/user/month |
+| Plan     | Database Size | Bandwidth | Price          |
+| -------- | ------------- | --------- | -------------- |
+| **Free** | 500 MB        | Unlimited | $0 ✅          |
+| **Pro**  | 8 GB          | Unlimited | $25/month      |
+| **Team** | Unlimited     | Unlimited | $25/user/month |
 
 **For Competition:** Free tier is perfect! (500MB = ~50,000+ tickets)
 

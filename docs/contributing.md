@@ -59,7 +59,7 @@ pnpm build
 
 - **Strict mode** enabled via shared tsconfig
 - Use explicit types over `any` — prefer `unknown` or proper interfaces
-- Use `enum` values from `@maintix/shared-types` (not string literals)
+- Use `enum` values from local shared-types (not string literals)
 
 ### API (NestJS)
 
@@ -115,7 +115,7 @@ Paginated responses:
 
 ### Error Format
 
-Use `BusinessException` from `@maintix/shared-types`:
+Use `BusinessException` from local shared-types:
 
 ```typescript
 throw new BusinessException(ErrorCode.TICKET_NOT_FOUND, HttpStatus.NOT_FOUND);
@@ -125,10 +125,10 @@ Never throw raw `HttpException` — always use `BusinessException` with a typed 
 
 ### Database Changes
 
-1. Edit `packages/database/prisma/schema.prisma`
+1. Edit `apps/api/prisma/schema.prisma`
 2. Run `pnpm db:generate` to regenerate the Prisma client
 3. Run `pnpm db:push` (dev) or `pnpm db:migrate` (production) to apply
-4. If adding new enums, mirror them in `packages/shared-types/src/enums.ts`
+4. If adding new enums, mirror them in `apps/*/shared-types/enums.ts`
 
 ### Adding a New Feature Module (API)
 
@@ -147,10 +147,10 @@ Never throw raw `HttpException` — always use `BusinessException` with a typed 
 
 ### Adding Shared Types
 
-1. Add to the appropriate file in `packages/shared-types/src/`
-2. Export from `src/index.ts` if creating a new file
+1. Add to the appropriate file in `apps/*/shared-types/`
+2. Export from the index file if creating a new file
 3. Run `pnpm build` to recompile
-4. Import as `import { YourType } from '@maintix/shared-types'`
+4. Import as local dependency
 
 ---
 
@@ -162,4 +162,4 @@ Never throw raw `HttpException` — always use `BusinessException` with a typed 
 4. **Optimistic concurrency** — all ticket mutations must accept and check `version`
 5. **Event-driven notifications** — emit events from services, handle in `NotificationListeners`
 6. **Typed errors** — use `ErrorCode` enum, never raw strings
-7. **Shared enums** — always import from `@maintix/shared-types`, never redefine
+7. **Shared enums** — always import from local shared-types, never redefine

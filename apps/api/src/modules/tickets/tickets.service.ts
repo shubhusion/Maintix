@@ -2,7 +2,7 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@/common/database/prisma.service';
 import { BusinessException } from '@/common/exceptions/business.exception';
-import { ErrorCode, Role, TicketStatus, Priority, ActivityAction } from '@maintix/shared-types';
+import { ErrorCode, Role, TicketStatus, Priority, ActivityAction, NotificationType } from '@maintix/shared-types';
 import { TicketStateMachine } from './ticket-state-machine';
 import { TicketActivityService } from './ticket-activity.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -64,6 +64,24 @@ export class TicketsService {
       action: ActivityAction.TICKET_CREATED,
       newValue: { title: ticket.title, status: TicketStatus.OPEN },
     });
+
+    // Emit notification for managers
+    const managers = await this.prisma.propertyMember.findMany({
+      where: { propertyId, user: { role: Role.MANAGER } },
+      select: { userId: true },
+    });
+
+    for (const manager of managers) {
+      await this.prisma.notification.create({
+        data: {
+          userId: manager.userId,
+          type: NotificationType.TICKET_CREATED,
+          title: 'New Ticket Created',
+          message: `New ticket created: ${ticket.title}`,
+          ticketId: ticket.id,
+        },
+      });
+    }
 
     this.eventEmitter.emit('ticket.created', { ticket, actorId: userId });
 
@@ -195,6 +213,17 @@ export class TicketsService {
       action: ActivityAction.TECHNICIAN_ASSIGNED,
       previousValue: { status: ticket.status, assignedToId: ticket.assignedToId },
       newValue: { status: TicketStatus.ASSIGNED, assignedToId: technicianId },
+    });
+
+    // Emit notification for technician
+    await this.prisma.notification.create({
+      data: {
+        userId: technicianId,
+        type: NotificationType.TICKET_ASSIGNED,
+        title: 'Ticket Assigned',
+        message: `You have been assigned to ticket: ${ticket.title}`,
+        ticketId,
+      },
     });
 
     this.eventEmitter.emit('ticket.assigned', {

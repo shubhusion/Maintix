@@ -2,7 +2,7 @@
 
 ## Overview
 
-Maintix is a **pnpm monorepo** managed by **Turborepo** containing two applications and four shared packages. The architecture follows a clean separation between a REST API backend and a React SPA frontend, connected through shared type definitions.
+Maintix is a **pnpm monorepo** managed by **Turborepo** containing two standalone applications. Each app has its own shared-types folder with local type definitions. The architecture follows a clean separation between a REST API backend and a React SPA frontend.
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -14,16 +14,16 @@ Maintix is a **pnpm monorepo** managed by **Turborepo** containing two applicati
 │  └──────┬───────┘    └──────┬──────┘                            │
 │         │                   │                                   │
 │         ▼                   ▼                                   │
-│  ┌─────────────────────────────────────────┐                    │
-│  │         packages/shared-types           │                    │
-│  │    (Enums, Types, Constants, Errors)    │                    │
-│  └─────────────────────────────────────────┘                    │
-│         │                   │                                   │
-│         ▼                   ▼                                   │
-│  ┌────────────┐    ┌────────────────┐    ┌──────────────────┐  │
-│  │  tsconfig   │    │    database     │    │  eslint-config   │  │
-│  │  (shared)   │    │ (Prisma ORM)   │    │    (shared)      │  │
-│  └────────────┘    └────────────────┘    └──────────────────┘  │
+│  ┌───────────────┐    ┌───────────────┐                        │
+│  │ apps/web/     │    │ apps/api/     │                        │
+│  │ shared-types/ │    │ shared-types/ │                        │
+│  └───────────────┘    └───────────────┘                        │
+│                        │                                        │
+│                        ▼                                        │
+│               ┌────────────────┐                               │
+│               │  apps/api/     │                               │
+│               │  prisma/       │                               │
+│               └────────────────┘                               │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -38,26 +38,23 @@ Maintix is a **pnpm monorepo** managed by **Turborepo** containing two applicati
 
 ### Packages
 
-| Package                  | Path                      | Purpose                                                |
-| ------------------------ | ------------------------- | ------------------------------------------------------ |
-| `@maintix/database`      | `packages/database/`      | Prisma schema, client generation, seed script          |
-| `@maintix/shared-types`  | `packages/shared-types/`  | Enums, TypeScript types, error codes, constants        |
-| `@maintix/tsconfig`      | `packages/tsconfig/`      | Shared `tsconfig.json` presets (base, NestJS, Next.js) |
-| `@maintix/eslint-config` | `packages/eslint-config/` | Shared ESLint configuration                            |
+| Package                 | Path                   | Purpose                                         |
+| ----------------------- | ---------------------- | ----------------------------------------------- |
+| `@maintix/shared-types` | `apps/*/shared-types/` | Enums, TypeScript types, error codes, constants |
+
+> **Note:** The project uses a **standalone structure**. Each app (`apps/api/`, `apps/web/`) has its own `shared-types/` folder with local dependencies.
 
 ### Dependency Graph
 
 ```
 apps/api
-  ├── @maintix/database       (Prisma client)
-  ├── @maintix/shared-types   (enums, error codes)
-  ├── @maintix/tsconfig       (tsconfig/nestjs.json)
-  └── @maintix/eslint-config
+  ├── apps/api/shared-types   (enums, error codes)
+  ├── apps/api/prisma         (Prisma client)
+  └── ...
 
 apps/web
-  ├── @maintix/shared-types   (enums, types)
-  ├── @maintix/tsconfig       (tsconfig/nextjs.json)
-  └── @maintix/eslint-config
+  ├── apps/web/shared-types   (enums, types)
+  └── ...
 ```
 
 ## Build Pipeline
@@ -73,7 +70,7 @@ Turborepo orchestrates builds with dependency-aware task execution:
 }
 ```
 
-Build order: `shared-types` → `database` → `api` + `web` (parallel).
+Build order: `shared-types` (in each app) → `api` + `web` (parallel).
 
 ## Backend Architecture
 

@@ -28,7 +28,7 @@ cd Maintix
 pnpm install
 ```
 
-This installs all workspace dependencies across `apps/` and `packages/`.
+This installs all workspace dependencies across `apps/`.
 
 ### 3. Start PostgreSQL
 
@@ -186,22 +186,25 @@ pnpm dev
 # Run only the web app
 cd apps/web
 pnpm dev
-
-# Build a single package
-cd packages/shared-types
-pnpm build
 ```
 
 ---
 
 ## Troubleshooting
 
-### "Cannot find module '@maintix/shared-types'"
+### Build Errors
 
-Run a full build to generate the compiled output:
+If you encounter build errors, run a full build to generate the compiled output:
 
 ```bash
 pnpm build
+```
+
+For standalone development, you may also need to build each app individually:
+
+```bash
+cd apps/api/shared-types && pnpm build
+cd apps/web/shared-types && pnpm build
 ```
 
 ### Database connection refused

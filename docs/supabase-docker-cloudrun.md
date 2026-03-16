@@ -64,6 +64,7 @@ Wait 2-3 minutes for provisioning.
 4. Copy **URI** connection string
 
 It should look like:
+
 ```
 postgresql://postgres.maintix:[YOUR-PASSWORD]@aws-0-us-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true
 ```
@@ -87,14 +88,14 @@ pnpm prisma db pull
 
 ### Dockerfile (Already Configured)
 
-The `apps/api/Dockerfile` is already optimized for Supabase:
+The `apps/api/Dockerfile.standalone` is already optimized for Supabase:
 
 ```dockerfile
 # Generates Prisma client for Supabase
-RUN cd packages/database && pnpm prisma generate
+RUN cd apps/api && pnpm prisma generate
 
 # Copies Prisma schema
-COPY packages/database/prisma ./prisma
+COPY apps/api/prisma ./prisma
 
 # Optimized for Supabase connection pooling
 ENV PGPOOL_MAX_CLIENT=100
@@ -109,6 +110,7 @@ gcloud builds submit --tag gcr.io/YOUR_PROJECT/maintix-api
 ```
 
 The Docker build will:
+
 1. ✅ Install all dependencies
 2. ✅ Generate Prisma client
 3. ✅ Build the API
@@ -201,7 +203,7 @@ export DATABASE_URL="your-supabase-url"
 pnpm db:migrate:supabase
 
 # Or manually
-cd packages/database
+cd apps/api
 pnpm prisma generate
 pnpm prisma db push
 pnpm prisma db seed
@@ -221,7 +223,7 @@ steps:
         corepack enable
         corepack prepare pnpm@latest --activate
         pnpm install --frozen-lockfile
-        cd packages/database
+        cd apps/api
         pnpm prisma generate
         pnpm prisma db push
         pnpm prisma db seed
@@ -230,6 +232,7 @@ steps:
 ```
 
 Run:
+
 ```bash
 gcloud builds submit --config=cloudbuild-migrate.yaml --substitutions=_DATABASE_URL="your-url"
 ```
@@ -307,7 +310,7 @@ DATABASE_URL="postgresql://postgres.PROJECT:PASS@aws-0-region.pooler.supabase.co
 **Solution:** Generate in Dockerfile
 
 ```dockerfile
-RUN cd packages/database && pnpm prisma generate
+RUN cd apps/api && pnpm prisma generate
 ```
 
 ---
