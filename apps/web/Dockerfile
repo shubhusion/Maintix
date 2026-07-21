@@ -2,7 +2,7 @@
 # Build from: cd apps/web && docker build -t maintix-web:latest .
 
 # Build stage
-FROM node:22-alpine AS builder
+FROM node:25-alpine3.22 AS builder
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ ENV BUILD_STANDALONE=true
 RUN pnpm build
 
 # Production stage
-FROM node:22-alpine AS runner
+FROM node:25-alpine3.22 AS runner
 
 WORKDIR /app
 

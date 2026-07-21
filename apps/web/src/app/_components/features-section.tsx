@@ -42,7 +42,8 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     title: 'Unified Ticket Dashboard',
-    description: 'Every property, every ticket, every status — visible at a glance. Filter by property, priority, status, or assignee.',
+    description:
+      'Every property, every ticket, every status — visible at a glance. Filter by property, priority, status, or assignee.',
     icon: ClipboardList,
     gradient: 'from-primary-500 to-primary-600',
     glowColor: 'shadow-primary-500/30',
@@ -51,21 +52,38 @@ const FEATURES: Feature[] = [
     accentColor: 'text-primary-500',
     stat: 'Interactive Demo',
     statIcon: Zap,
-    span: 'md:col-span-2',
+    span: 'lg:col-span-2',
     popular: true,
     uiPreview: (
       <div className="space-y-2">
         {[
-          { label: 'Broken AC — Unit 4B', tag: 'High', tagColor: 'text-red-500', bgColor: 'bg-red-500/10' },
-          { label: 'Leaking faucet — Kitchen', tag: 'Medium', tagColor: 'text-amber-500', bgColor: 'bg-amber-500/10' },
-          { label: 'Replace hallway lights', tag: 'Low', tagColor: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+          {
+            label: 'Broken AC — Unit 4B',
+            tag: 'High',
+            tagColor: 'text-red-500',
+            bgColor: 'bg-red-500/10',
+          },
+          {
+            label: 'Leaking faucet — Kitchen',
+            tag: 'Medium',
+            tagColor: 'text-amber-500',
+            bgColor: 'bg-amber-500/10',
+          },
+          {
+            label: 'Replace hallway lights',
+            tag: 'Low',
+            tagColor: 'text-emerald-500',
+            bgColor: 'bg-emerald-500/10',
+          },
         ].map((t) => (
           <div
             key={t.label}
             className="flex items-center justify-between rounded-lg border border-border/40 bg-muted/30 px-3 py-2"
           >
             <span className="text-xs text-muted-foreground">{t.label}</span>
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${t.bgColor} ${t.tagColor}`}>
+            <span
+              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${t.bgColor} ${t.tagColor}`}
+            >
               {t.tag}
             </span>
           </div>
@@ -75,7 +93,8 @@ const FEATURES: Feature[] = [
   },
   {
     title: '6-Stage Workflow',
-    description: 'Our validated pipeline ensures nothing falls through the cracks from creation to closure.',
+    description:
+      'Our validated pipeline ensures nothing falls through the cracks from creation to closure.',
     icon: Wrench,
     gradient: 'from-amber-500 to-amber-600',
     glowColor: 'shadow-amber-500/30',
@@ -84,7 +103,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-amber-500',
     stat: 'Core Feature',
     statIcon: TrendingUp,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="flex items-center gap-0.5 overflow-x-auto pb-2">
         {WORKFLOW_STAGES.map((s, i) => (
@@ -120,7 +139,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-emerald-500',
     stat: 'Secure by default',
     statIcon: Shield,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="space-y-1.5">
         {['Manager', 'Technician', 'Tenant'].map((role, i) => (
@@ -140,7 +159,8 @@ const FEATURES: Feature[] = [
   },
   {
     title: 'Multi-Property',
-    description: 'Manage unlimited properties with isolated data. Switch context instantly between buildings.',
+    description:
+      'Manage unlimited properties with isolated data. Switch context instantly between buildings.',
     icon: Building2,
     gradient: 'from-sky-500 to-sky-600',
     glowColor: 'shadow-sky-500/30',
@@ -149,7 +169,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-sky-500',
     stat: 'Unlimited properties',
     statIcon: Building2,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="space-y-1.5">
         {['Sunset Apartments', 'Oak Manor', 'River View'].map((p, i) => (
@@ -169,7 +189,8 @@ const FEATURES: Feature[] = [
   },
   {
     title: 'Smart Notifications',
-    description: 'In-app alerts for assignments, status changes, and completions. Never miss an update.',
+    description:
+      'In-app alerts for assignments, status changes, and completions. Never miss an update.',
     icon: Bell,
     gradient: 'from-violet-500 to-violet-600',
     glowColor: 'shadow-violet-500/30',
@@ -178,7 +199,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-violet-500',
     stat: 'Real-time alerts',
     statIcon: Bell,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="space-y-1.5">
         {[
@@ -199,7 +220,8 @@ const FEATURES: Feature[] = [
   },
   {
     title: 'Analytics & Reporting',
-    description: 'Track response times, completion rates, and technician performance with detailed reports.',
+    description:
+      'Track response times, completion rates, and technician performance with detailed reports.',
     icon: BarChart3,
     gradient: 'from-rose-500 to-rose-600',
     glowColor: 'shadow-rose-500/30',
@@ -208,7 +230,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-rose-500',
     stat: 'Data-driven insights',
     statIcon: TrendingUp,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -230,7 +252,8 @@ const FEATURES: Feature[] = [
   },
   {
     title: 'Mobile-First',
-    description: 'Native mobile experience for technicians on the go. Works offline, syncs when connected.',
+    description:
+      'Native mobile experience for technicians on the go. Works offline, syncs when connected.',
     icon: Smartphone,
     gradient: 'from-cyan-500 to-cyan-600',
     glowColor: 'shadow-cyan-500/30',
@@ -239,7 +262,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-cyan-500',
     stat: 'iOS & Android',
     statIcon: Smartphone,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="flex items-center justify-center">
         <div className="relative w-16 h-24 rounded-xl border-2 border-border bg-background overflow-hidden">
@@ -264,7 +287,7 @@ const FEATURES: Feature[] = [
     accentColor: 'text-indigo-500',
     stat: 'Coming soon',
     statIcon: Puzzle,
-    span: '',
+    span: 'lg:col-span-2',
     uiPreview: (
       <div className="grid grid-cols-4 gap-1.5">
         {['📧', '💬', '📊', '🔔'].map((emoji, i) => (
@@ -291,11 +314,11 @@ export function FeaturesSection() {
     >
       {/* Background with radial glows */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/10 to-background" />
-      
+
       {/* Radial glows under feature cards */}
       <div className="absolute top-1/3 left-[20%] w-96 h-96 bg-primary-500/8 rounded-full blur-[120px]" />
       <div className="absolute top-2/3 right-[20%] w-96 h-96 bg-amber-500/6 rounded-full blur-[120px]" />
-      
+
       {/* Grid background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px)] [background-size:48px_48px] opacity-[0.03]" />
 
@@ -327,7 +350,7 @@ export function FeaturesSection() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 mt-16">
           {FEATURES.map((feature, i) => (
             <BlurFade
               key={feature.title}
@@ -383,10 +406,7 @@ export function FeaturesSection() {
                   <div className="flex items-center justify-between mb-4">
                     <motion.div
                       whileHover={{ scale: 1.1, rotate: 5 }}
-                      className={cn(
-                        'p-3 rounded-xl bg-gradient-to-br shadow-lg',
-                        feature.gradient,
-                      )}
+                      className={cn('p-3 rounded-xl bg-gradient-to-br shadow-lg', feature.gradient)}
                     >
                       <feature.icon className="h-6 w-6 text-white" />
                     </motion.div>
@@ -449,7 +469,7 @@ export function FeaturesSection() {
                 Everything you need to manage maintenance at scale.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 {
@@ -519,9 +539,7 @@ export function FeaturesSection() {
             className="mt-16 text-center"
           >
             <div className="inline-flex flex-col items-center">
-              <p className="text-muted-foreground mb-4">
-                Ready to see it in action?
-              </p>
+              <p className="text-muted-foreground mb-4">Ready to see it in action?</p>
               <motion.a
                 href="/login"
                 whileHover={{ scale: 1.05 }}

@@ -1,0 +1,22 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    dir: apps/api
+    args:
+      - build
+      - -t
+      - ${_REGISTRY}/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
+      - -t
+      - ${_REGISTRY}/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:latest
+      - .
+
+images:
+  - ${_REGISTRY}/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
+  - ${_REGISTRY}/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:latest
+
+substitutions:
+  _REGISTRY: asia-south1-docker.pkg.dev
+  _REPOSITORY: maintix-api
+  _SERVICE: maintix-api
+
+options:
+  machineType: E2_HIGHCPU_32

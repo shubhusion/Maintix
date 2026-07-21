@@ -7,9 +7,10 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: us-central1
+  REGION: asia-south1
   SERVICE: maintix-api
-  REGISTRY: us-central1-docker.pkg.dev
+  REGISTRY: asia-south1-docker.pkg.dev
+  REPOSITORY: maintix-api
 
 permissions:
   contents: read
@@ -39,25 +40,24 @@ jobs:
 
       - name: Configure Docker Authentication
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
       - name: Build Docker Image
         run: |
           docker build \
-            -f Dockerfile \
-            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:${{ github.sha }} \
-            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:latest \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest \
             .
 
       - name: Push Docker Image
         run: |
-          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:latest
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:latest
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE }} \
-            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/maintix/api:${{ github.sha }} \
+            --image=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }} \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \

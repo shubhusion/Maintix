@@ -2,14 +2,14 @@
 # Build from: cd apps/api && docker build -t maintix-api:latest .
 
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 # Enable pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
-# Copy all files
+# Copy dependency files
 COPY package.json ./
 COPY tsconfig.json ./
 COPY shared-types/ ./shared-types/
@@ -32,7 +32,7 @@ WORKDIR /app
 RUN pnpm build
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
@@ -58,10 +58,6 @@ USER nestjs
 
 # Expose port
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/health || exit 1
 
 # Set environment
 ENV NODE_ENV=production

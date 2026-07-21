@@ -7,9 +7,10 @@ set -e
 
 # Configuration
 PROJECT_ID=${1:-$(gcloud config get-value project)}
-REGION=${2:-us-central1}
+REGION=${2:-asia-south1}
 SERVICE_NAME="maintix-api"
-IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
+REGISTRY="asia-south1-docker.pkg.dev"
+REPOSITORY="maintix-api"
 
 echo "🚀 Deploying Maintix API to Google Cloud Run"
 echo "=============================================="
@@ -26,9 +27,20 @@ if [ -z "${PROJECT_ID}" ]; then
     exit 1
 fi
 
-# Step 1: Build Docker image
+# Step 0: Enable required services
+echo "🔧 Enabling required GCP services..."
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  --project="${PROJECT_ID}" 2>/dev/null || true
+
+# Step 1: Build Docker image via Cloud Build
 echo "📦 Building Docker image..."
-gcloud builds submit --tag ${IMAGE_NAME}:latest --machine-type=e2-highcpu-32
+gcloud builds submit \
+  --config cloudbuild.yaml \
+  --project="${PROJECT_ID}" \
+  --substitutions=_REGISTRY=${REGISTRY},_REPOSITORY=${REPOSITORY},_SERVICE=${SERVICE_NAME}
 
 if [ $? -ne 0 ]; then
     echo "❌ Build failed!"
@@ -40,8 +52,14 @@ echo ""
 
 # Step 2: Deploy to Cloud Run
 echo "☁️ Deploying to Cloud Run..."
+echo ""
+echo "⚠️  Before deploying, make sure you have set up your secrets:"
+echo "   gcloud secrets create maintix-env --data-file=.env.production"
+echo "   (or use --set-env-vars with each variable)"
+echo ""
+
 gcloud run deploy ${SERVICE_NAME} \
-  --image ${IMAGE_NAME}:latest \
+  --image ${REGISTRY}/${PROJECT_ID}/${REPOSITORY}/${SERVICE_NAME}:latest \
   --platform managed \
   --region ${REGION} \
   --allow-unauthenticated \
@@ -51,9 +69,7 @@ gcloud run deploy ${SERVICE_NAME} \
   --timeout 300 \
   --min-instances 0 \
   --max-instances 10 \
-  --set-env-vars="NODE_ENV=production" \
-  --add-cloudsql-instances=${PROJECT_ID}:${REGION}:maintix-db \
-  --service-account=maintix-api@${PROJECT_ID}.iam.gserviceaccount.com
+  --set-env-vars="NODE_ENV=production,PORT=8080"
 
 if [ $? -ne 0 ]; then
     echo "❌ Deployment failed!"
@@ -71,20 +87,9 @@ SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
 
 echo "🌐 Service URL: ${SERVICE_URL}"
 echo ""
-
-# Step 4: Run database migrations
-echo "🗄️ Running database migrations..."
-gcloud run services update-traffic ${SERVICE_NAME} \
-  --to-latest \
-  --platform managed \
-  --region ${REGION}
-
+echo "⚠️  Set remaining environment variables via:"
+echo "   gcloud run services update ${SERVICE_NAME} \\"
+echo "     --region ${REGION} \\"
+echo "     --set-env-vars=\"DATABASE_URL=...,JWT_SECRET=...,SUPABASE_URL=...,SUPABASE_SERVICE_KEY=...,CORS_ORIGIN=...\""
 echo ""
 echo "🎉 Deployment complete!"
-echo ""
-echo "Next steps:"
-echo "1. Set environment variables in Cloud Run console"
-echo "2. Run: gcloud run services update ${SERVICE_NAME} --set-env-vars DATABASE_URL=your_url"
-echo "3. Test the API: curl ${SERVICE_URL}/health"
-echo "4. Update frontend .env with: NEXT_PUBLIC_API_URL=${SERVICE_URL}"
-echo ""

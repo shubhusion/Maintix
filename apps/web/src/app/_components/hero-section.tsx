@@ -58,7 +58,7 @@ export function HeroSection({
             <WordRotate
               words={['finally organized', 'fully automated', 'beautifully simple']}
               duration={3000}
-              className="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 dark:from-primary-300 dark:via-primary-400 dark:to-accent-400 bg-clip-text text-transparent"
+              className="px-[10%] bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 dark:from-primary-300 dark:via-primary-400 dark:to-accent-400 bg-clip-text text-transparent"
               motionProps={{
                 initial: { opacity: 0, y: 20, filter: 'blur(4px)' },
                 animate: { opacity: 1, y: 0, filter: 'blur(0px)' },

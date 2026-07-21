@@ -14,10 +14,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
  */
 function validateEnvironmentVariables(configService: ConfigService): void {
   const logger = new Logger('EnvironmentValidation');
-  const requiredVars = [
-    'DATABASE_URL',
-    'JWT_SECRET',
-  ];
+  const requiredVars = ['DATABASE_URL', 'JWT_SECRET'];
 
   const missingVars: string[] = [];
   const warnings: string[] = [];
@@ -53,11 +50,13 @@ function validateEnvironmentVariables(configService: ConfigService): void {
     for (const envVar of missingVars) {
       logger.error(`  - ${envVar}`);
     }
-    
+
     logger.error('📝 Please set these environment variables:');
     logger.error('');
     logger.error('For Supabase (recommended):');
-    logger.error('  DATABASE_URL="postgresql://postgres.[PROJECT]:[PASS]@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"');
+    logger.error(
+      '  DATABASE_URL="postgresql://postgres.[PROJECT]:[PASS]@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"',
+    );
     logger.error('  JWT_SECRET="your-super-secret-key-min-32-characters-long"');
     logger.error('');
     logger.error('For local development:');
@@ -66,16 +65,18 @@ function validateEnvironmentVariables(configService: ConfigService): void {
     logger.error('');
     logger.error('📚 See docs/supabase-docker-cloudrun.md for complete setup guide');
     logger.error('');
-    
+
     throw new Error(
       `Missing required environment variables: ${missingVars.join(', ')}. ` +
-      'Application cannot start without these variables.'
+        'Application cannot start without these variables.',
     );
   }
 
   // Log successful validation
   logger.log('✅ Environment variables validated successfully');
-  logger.log(`📊 Database: ${configService.get<string>('DATABASE_URL', '').includes('supabase') ? 'Supabase' : 'PostgreSQL'}`);
+  logger.log(
+    `📊 Database: ${configService.get<string>('DATABASE_URL', '').includes('supabase') ? 'Supabase' : 'PostgreSQL'}`,
+  );
   logger.log(`🔐 JWT Expires: ${configService.get<string>('JWT_EXPIRES_IN', '7d')}`);
   logger.log(`🌍 Environment: ${configService.get<string>('NODE_ENV', 'development')}`);
   logger.log(`🔓 CORS Origin: ${configService.get<string>('CORS_ORIGIN', '*')}`);
@@ -92,18 +93,18 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
-  // CORS - Allow both with and without trailing slash
+  // CORS - Support comma-separated origins, both with and without trailing slash
   const corsOrigin = configService.get<string>('CORS_ORIGIN', 'http://localhost:3000');
-  const corsOrigins = [
-    corsOrigin,
-    corsOrigin.replace(/\/$/, ''), // Without trailing slash
-    corsOrigin.replace(/\/?$/, '/'), // With trailing slash
-    'http://localhost:3000',
-    'http://localhost:3001',
+  const corsOrigins = corsOrigin
+    .split(',')
+    .map((o) => o.trim())
+    .flatMap((o) => [o, o.replace(/\/$/, ''), o.replace(/\/?$/, '/')]);
+  const uniqueOrigins = [
+    ...new Set([...corsOrigins, 'http://localhost:3000', 'http://localhost:3001']),
   ];
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: uniqueOrigins,
     credentials: true,
   });
 
@@ -145,7 +146,9 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`🚀 Maintix API running on http://localhost:${port}`);
   logger.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
-  logger.log(`🗄️  Database: ${configService.get<string>('DATABASE_URL', '').includes('supabase') ? 'Supabase' : 'PostgreSQL'}`);
+  logger.log(
+    `🗄️  Database: ${configService.get<string>('DATABASE_URL', '').includes('supabase') ? 'Supabase' : 'PostgreSQL'}`,
+  );
 }
 
 bootstrap();

@@ -34,8 +34,8 @@ docs
 __tests__
 coverage
 
-# Docker
-Dockerfile*
+# Docker (root only - don't block apps/*/Dockerfile)
+/Dockerfile*
 docker-compose*.yml
 .gcloudignore
 

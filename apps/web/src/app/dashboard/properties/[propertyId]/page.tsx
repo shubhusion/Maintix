@@ -2,7 +2,9 @@
 
 import { use, useState } from 'react';
 import { Building2, Tag, Ticket, Users, Settings, ClipboardList, Home } from 'lucide-react';
-import { useProperty } from '@/hooks/use-properties';
+import { useProperty, usePropertyMembers } from '@/hooks/use-properties';
+import { useCategories } from '@/hooks/use-categories';
+import { useTickets } from '@/hooks/use-tickets';
 import { useAuth } from '@/contexts/auth-context';
 import { Role } from '@maintix/shared-types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +24,9 @@ export default function PropertyDetailPage({
   const { propertyId } = use(params);
   const { user } = useAuth();
   const { data: property, isLoading: propLoading } = useProperty(propertyId);
+  const { data: members } = usePropertyMembers(propertyId);
+  const { data: categories } = useCategories(propertyId);
+  const { data: tickets } = useTickets(propertyId);
   const [activeTab, setActiveTab] = useState('overview');
 
   const isManager = user?.role === Role.MANAGER;
@@ -40,7 +45,7 @@ export default function PropertyDetailPage({
             </div>
           </div>
         </div>
-        
+
         {/* Stats Skeleton */}
         <div className="grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -77,7 +82,7 @@ export default function PropertyDetailPage({
       <div className="relative overflow-hidden rounded-xl border bg-card">
         {/* Gradient Banner */}
         <div className="h-32 w-full bg-gradient-to-r from-primary/20 via-primary/10 to-transparent" />
-        
+
         {/* Property Info Overlay */}
         <div className="absolute -bottom-6 left-6 right-6 flex items-end justify-between">
           <div className="flex items-end gap-4">
@@ -85,7 +90,7 @@ export default function PropertyDetailPage({
             <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-600 text-primary-foreground text-2xl font-bold shadow-lg">
               {propertyInitials}
             </div>
-            
+
             {/* Property Details */}
             <div className="mb-1">
               <h1 className="text-2xl font-bold tracking-tight">{property.name}</h1>
